@@ -1,0 +1,31 @@
+import numpy as np
+import util
+import random
+
+#matrix as list of column vector
+
+def kmeans(mat, k):
+    num_pts = mat.shape[0]
+    dim = mat.shape[1]
+    resp = np.zeros(num_pts,1)
+    for i in range(k):
+    	num = random.randrange(k)
+	resp[i][1]=num
+    mu = np.zeros(k,dim)
+    result = np.zeros(num_pts,k)
+    while(true):
+        for i in range(k):
+    	    mu[i] = mean(mat(resp(:,1)==i,:),axis=0)
+    	fst = np.ones(num_pts,k)*np.sum(mat * mat, axis = 1).reshape(num_pts,1)
+	product = np.dot(mat, np.transpose(mu))
+	snd = np.ones(num_pts,k)*np.sum(mu*mu, axis = 1)
+	result = fst - 2*product + snd
+	temp_resp = np.argmin(result,axis = 1).reshape(num_pts,1)
+	if(temp_resp == resp).all():
+	     pass
+	resp = temp_resp
+
+     return sum(np.min(result,axis = 1))
+     
+def main():
+    kmeans([[1]],1)
