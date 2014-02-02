@@ -26,4 +26,3 @@ for query in test_queries:
 util.write_predictions(test_queries, pred_filename)
 
 
-

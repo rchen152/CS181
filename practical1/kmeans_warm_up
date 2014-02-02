@@ -26,6 +26,3 @@ def kmeans(mat, k):
 	resp = temp_resp
 
      return sum(np.min(result,axis = 1))
-     
-def main():
-    kmeans([[1]],1)

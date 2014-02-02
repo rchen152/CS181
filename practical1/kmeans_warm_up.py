@@ -2,6 +2,7 @@ import numpy as np
 import util
 import random
 import cPickle
+import math
 from PIL import Image
 
 def get_image(cifar_array, name):
@@ -23,8 +24,8 @@ def get_distances(k, num_pts, mat, mu):
     result = fst - 2*product + snd
     return result
 
-def kmeans(mat, k):
-    mat = mat.astype(float)
+def kmeans(m, k):
+    mat = m.astype(float)
     num_pts = mat.shape[0]
     dim = mat.shape[1]
     resp = np.zeros((num_pts,1))
@@ -32,21 +33,27 @@ def kmeans(mat, k):
     	num = random.randrange(k)
 	resp[i][0]=num
     mu = np.zeros((k,dim))
-    #while(True):
-    for t in range(5):
+    result = np.zeros((num_pts,k))
+    keys = np.zeros((k, 1))        
+    while(True):
         for i in range(k):
     	    mu[i] = np.mean(mat[resp[:,0]==i,:],axis=0)
-
-        result = get_distances(k, num_pts, mat, mu)
+        fst = np.ones((num_pts,k))*np.sum(mat*mat, axis = 1).reshape(num_pts,1)
+	product = np.dot(mat, np.transpose(mu))
+	snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
+	result = fst - 2*product + snd
 	temp_resp = np.argmin(result,axis = 1).reshape(num_pts,1)
+	print math.sqrt(sum(np.min(result,axis = 1))/num_pts)
         if(temp_resp == resp).all():
 	     break
-	resp = temp_resp
-        print sum(np.min(result,axis = 1))
+        resp = temp_resp
+    keys = np.argmin(result, axis = 0)
+    error = math.sqrt(sum(np.min(result,axis = 1))/num_pts)
     for i in range(k):
         get_image(mu[i], str(i) + ".png")
+    return error
 
 fo = open('cifar-10-batches-py/data_batch_1', 'rb')
 dict = cPickle.load(fo)
 fo.close()
-kmeans(dict['data'], 5)
+print kmeans(dict['data'], 5)
