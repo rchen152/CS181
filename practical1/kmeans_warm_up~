@@ -1,0 +1,10 @@
+import numpy as np
+import util
+
+#matrix as list of column vector
+def snd(a,b):
+    return b
+
+def kmeans(mat, k):
+    responsibilities = np.zeros(k,snd mat.shape)
+
