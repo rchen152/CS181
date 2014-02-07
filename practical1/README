@@ -1,0 +1,19 @@
+Explanation of files:
+
+book_and_user_mean.py - takes into account the book mean if there is no data on the user
+
+kmeans_warm_up.py - implements kmeans warm up
+
+run_data.py - program for running data with kmeans_warm_up, file paths need to be fixed?
+
+run_plus - program for running kmeans++ with warm_up_plus, file paths need to be fixed?
+
+warm_up_plus.py - implements kmeans++, doesn't seem to be better for warm up than kmeans though
+
+weighted_book_user.py - takes weightings to use for the global mean, user mean, and book mean
+
+Trials submitted:
+2/5/14:
+book_and_user_mean - .78344
+weighted_book_user - params 2, 1 - .77997
+weighted_book_user - params 2.5, .5 - .77536
