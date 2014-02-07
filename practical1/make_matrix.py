@@ -19,9 +19,21 @@ mean_rating = float(sum(map(lambda x: x['rating'], training_data)))/num_train
 data = np.zeros((num_train))
 book_num  = np.zeros((num_train))
 user_id = np.zeros((num_train))
-for i in range num_train:
+
+books = {}
+index = 0
+for book in book_list:
+    books[book['isbn']] = index
+    index = index + 1
+    
+for i in range (num_train):
     data[i] = training_data[i]['rating']
-    book_num[i] = training_data[i]['index']
+    book_num[i] = books[training_data[i]['isbn']]
     user_id[i] = training_data[i]['user']
 
-mat = coo_matrix((data,(book_num,user_id)),[shape=(len(book_list),len(user_list)])
+max_user = 0
+for user in user_list:
+    if (max_user < user['user']):
+        max_user = user['user']
+
+mat = coo_matrix((data,(book_num,user_id)),shape=(len(book_list),max_user+1))
