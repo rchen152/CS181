@@ -19,6 +19,9 @@ test_queries   = util.load_test(test_filename)
 book_list      = util.load_books(book_filename)
 user_list      = util.load_users(user_filename)
 
+sorted(user_list)
+print(user_list)
+
 # Compute the global mean rating for a fallback.
 num_train = len(training_data)
 mean_rating = float(sum(map(lambda x: x['rating'], training_data)))/num_train
