@@ -57,4 +57,4 @@ def kmeans(m, k):
 fo = open('cifar-10-batches-py/data_batch_1', 'rb')
 dict = cPickle.load(fo)
 fo.close()
-kmeans(dict['data'], 5)
+kmeans(dict['data'], 12)
