@@ -3,7 +3,7 @@ import util
 from sklearn.cluster import Ward
 import kmeans_plus
 
-CRITICAL_BOOK_NUM = 4
+# CRITICAL_BOOK_NUM = 4
 BOOK_MEMORY_ERROR = 6
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
@@ -32,11 +32,13 @@ for book in book_list:
     books[book['isbn']] = { 'total': 0, # For storing the total of ratings.
                             'count': 0, # For storing the number of ratings.
                             }
-    
+
 # Iterate over the training data to compute means.
 for rating in training_data:
     books[rating['isbn']]['total'] += rating['rating']
     books[rating['isbn']]['count'] += 1
+
+book_short = [book for book in book_list if books[book['isbn']]['count'] > BOOK_MEMORY_ERROR]
 
 # Turn the list of users into a dictionary.
 # Store data for each user to keep track of the per-user average.
@@ -45,24 +47,19 @@ for user in user_list:
     users[user['user']] = { 'total': 0, # For storing the total of ratings.
                             'count': 0, # For storing the number of ratings.
                             }
+train_med = [rating for rating in training_data if books[rating['isbn']]['count'] > BOOK_MEMORY_ERROR]
     
 # Iterate over the training data to compute means.
-for rating in training_data:
+for rating in train_med:
     user_id = rating['user']
     users[user_id]['total'] += rating['rating']
     users[user_id]['count'] += 1
 
-book_short = [book for book in book_list if books[book['isbn']]['count'] > BOOK_MEMORY_ERROR]
 user_short = [user for user in user_list if users[user['user']]['count'] > 0]
-train_short = [rating for rating in training_data if books[rating['isbn']]['count'] > BOOK_MEMORY_ERROR and users[rating['user']]['count']>0]
+train_short = [rating for rating in train_med if users[rating['user']]['count'] > 0]
 
 num_books = len(book_short)
 num_users = len(user_short)
-
-max_user = 0
-for user in user_list:
-    if (max_user < user['user']):
-        max_user = user['user']
 
 book_keys = {}
 index = 0
@@ -70,18 +67,26 @@ for book in book_short:
     book_keys[book['isbn']] = index
     index += 1
 
-mat = np.zeros((max_user+1, num_books))
-book_pref = 0
+user_keys = {}
+index = 0
+for user in user_short:
+    user_keys[user['user']] = index
+    index += 1
+
+mat = np.zeros((num_users, num_books))
+# book_pref = 0
 for rating in train_short:
     book = books[rating['isbn']]
     user = users[rating['user']]
-    if (book['count'] > CRITICAL_BOOK_NUM):
+    '''if (book['count'] > CRITICAL_BOOK_NUM):
         book_pref = float(book['total']) / book['count']    
     else:
         book_pref = mean_rating
-    mat[rating['user']][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count'] + mean_rating - book_pref
+    mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count'] + mean_rating - book_pref'''
+#    mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
+    mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
-kmeans_plus.kmeans_plus(mat,2)
+# kmeans_plus.kmeans_plus(mat,2)
 
 # Make predictions for each test query.
 for query in test_queries:
