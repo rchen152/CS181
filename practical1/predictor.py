@@ -11,7 +11,7 @@ NUM_CLUSTERS = 5
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'predictor-kmeans1.csv'
+pred_filename  = 'predictor-kmeans2.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
