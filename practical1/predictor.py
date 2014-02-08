@@ -49,11 +49,17 @@ for rating in training_data:
     users[user_id]['total'] += rating['rating']
     users[user_id]['count'] += 1
 
-book_short = [book for book in book_list if books[book['isbn']]['count'] > 3]
+book_short = [book for book in book_list if books[book['isbn']]['count'] > 4]
 user_short = [user for user in user_list if users[user['user']]['count'] > 0]
+train_short = [rating for rating in training_data if books[rating['isbn']]['count'] > 4 and users[rating['user']]['count']>0]
 
 num_books = len(book_short)
 num_users = len(user_short)
+
+max_user = 0
+for user in user_list:
+    if (max_user < user['user']):
+        max_user = user['user']
 
 book_keys = {}
 index = 0
@@ -61,9 +67,9 @@ for book in book_short:
     book_keys[book['isbn']] = index
     index += 1
 
-mat = np.zeros((num_users, num_books))
-for rating in training_data:
-    mat[rating['user']][book_keys[rating['isbn']]] = rating['rating']
+mat = np.zeros((max_user+1, num_books))
+for rating in train_short:
+    mat[rating['user']][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
 Ward(n_clusters = 3).fit(mat)
 
