@@ -20,4 +20,7 @@ weighted_book_user - params 2.5, .5 - .77536
 weighted_book_user - params 3., .4 - 0.77463
 weighted_book_user - params 4., .5 - 0.77371
 weighted_book_user - params 4., .8 - 0.77295 	
-weighted_book_user - params 6., 1. - 0.77259 	
+weighted_book_user - params 6., 1. - 0.77259
+predictor - params 4,6,5 - .89
+predictor - params 4,7,10 - 0.88126
+predictor_no_zetas = params 4, 7, 10 - 0.87899

@@ -4,14 +4,14 @@ from sklearn.cluster import Ward
 import kmeans_plus
 
 # CRITICAL_BOOK_NUM = 4
-BOOK_MEMORY_ERROR = 6
+BOOK_MEMORY_ERROR = 7
 NUM_CLUSTERS = 10
 
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'predictor-kmeans4.csv'
+pred_filename  = 'predictor-kmeans5.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
@@ -115,6 +115,7 @@ for i in range(len(book_list)):
 for rating in training_data:
     training_sorted[long_book_keys[rating['isbn']]].add((rating['user'],rating['rating']))
 
+index = 0
 for query in test_queries:
     user = users[query['user']]
     # TODO global mean rating or mean rating on book?
@@ -124,20 +125,19 @@ for query in test_queries:
         num_zetas = 0
         for (use,rate) in training_sorted[long_book_keys[rating['isbn']]]:
             if (use in cluster):
-                sum_zetas += rate - float(users[use]['total'])/users[use]['count']
+                sum_zetas += rate
                 num_zetas += 1
         if(num_zetas == 0):
             query['rating'] = mean_rating
         else:
-            temp_rating =float(sum_zetas)/num_zetas + float(user['total'])/user['count']
-            if(temp_rating > 5):
-                temp_rating = 5
-            if(temp_rating < 1):
-                temp_rating = 1
-            query['rating'] = temp_rating
-    
+            if (num_zetas > 2):
+                index += 1
+            query['rating']=float(sum_zetas)/num_zetas
+            
     else:
         query['rating'] = mean_rating
+
+print index
 
 # Write the prediction file.
 util.write_predictions(test_queries, pred_filename)

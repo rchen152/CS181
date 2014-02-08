@@ -4,7 +4,7 @@ from sklearn.cluster import Ward
 import kmeans_plus
 
 # CRITICAL_BOOK_NUM = 4
-BOOK_MEMORY_ERROR = 6
+BOOK_MEMORY_ERROR = 7
 NUM_CLUSTERS = 10
 
 # This makes predictions based on the mean rating for each book in the
@@ -25,6 +25,7 @@ user_list      = util.load_users(user_filename)
 # Compute the global mean rating for a fallback.
 num_train = len(training_data)
 mean_rating = float(sum(map(lambda x: x['rating'], training_data)))/num_train
+print "The global mean rating is %0.3f." % (mean_rating)
 
 # Turn the list of books into an ISBN-keyed dictionary.
 # Store data for each book to keep track of the per-book average.
@@ -102,6 +103,8 @@ for i in range(num_users):
     cluster_ids[resp[i]].add(inv_user_keys[i])
 # Make predictions for each test query.
 
+print "made clusters"
+
 long_book_keys = {}
 index = 0
 for book in book_list:
@@ -114,6 +117,8 @@ for i in range(len(book_list)):
 
 for rating in training_data:
     training_sorted[long_book_keys[rating['isbn']]].add((rating['user'],rating['rating']))
+
+print "made sorted"
 
 for query in test_queries:
     user = users[query['user']]
