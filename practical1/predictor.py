@@ -5,6 +5,7 @@ import kmeans_plus
 
 # CRITICAL_BOOK_NUM = 4
 BOOK_MEMORY_ERROR = 6
+NUM_CLUSTERS = 5
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
@@ -88,17 +89,25 @@ for rating in train_short:
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']'''
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
-# TODO number of clusters
-[mu,resp] = kmeans_plus.kmeans_plus(mat,2)
+[mu,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
+cluster_ids = np.array((NUM_CLUSTERS))
+for i in range(NUM_CLUSTERS):
+    cluster_ids[i] = set()
+for i in range(num_users):
+    cluster_ids[resp[i]].add(inv_user_keys[i])
 
 # Make predictions for each test query.
 for query in test_queries:
-
     book = books[query['isbn']]
-
     user = users[query['user']]
 
-    if user['count'] == 0:
+    # TODO global mean rating or mean rating on book?
+    if (user['count'] == 0):
+        query['rating'] = mean_rating
+    else:
+        query['rating'] = mean_rating
+
+    '''if user['count'] == 0:
         # Perhaps we did not having any ratings in the training set.
         # In this case, make a global mean prediction.
         if book['count'] == 0:
@@ -111,7 +120,7 @@ for query in test_queries:
 
     else:
         # Predict the average for this user.
-        query['rating'] = float(user['total']) / user['count']
+        query['rating'] = float(user['total']) / user['count']'''
 
 # Write the prediction file.
 util.write_predictions(test_queries, pred_filename)
