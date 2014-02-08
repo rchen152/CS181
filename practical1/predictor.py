@@ -1,7 +1,10 @@
 import numpy as np
 import util
 from sklearn.cluster import Ward
+import kmeans_plus
 
+CRITICAL_BOOK_NUM = 4
+BOOK_MEMORY_ERROR = 6
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
@@ -49,11 +52,17 @@ for rating in training_data:
     users[user_id]['total'] += rating['rating']
     users[user_id]['count'] += 1
 
-book_short = [book for book in book_list if books[book['isbn']]['count'] > 3]
+book_short = [book for book in book_list if books[book['isbn']]['count'] > BOOK_MEMORY_ERROR]
 user_short = [user for user in user_list if users[user['user']]['count'] > 0]
+train_short = [rating for rating in training_data if books[rating['isbn']]['count'] > BOOK_MEMORY_ERROR and users[rating['user']]['count']>0]
 
 num_books = len(book_short)
 num_users = len(user_short)
+
+max_user = 0
+for user in user_list:
+    if (max_user < user['user']):
+        max_user = user['user']
 
 book_keys = {}
 index = 0
@@ -61,11 +70,18 @@ for book in book_short:
     book_keys[book['isbn']] = index
     index += 1
 
-mat = np.zeros((num_users, num_books))
-for rating in training_data:
-    mat[rating['user']][book_keys[rating['isbn']]] = rating['rating']
+mat = np.zeros((max_user+1, num_books))
+book_pref = 0
+for rating in train_short:
+    book = books[rating['isbn']]
+    user = users[rating['user']]
+    if (book['count'] > CRITICAL_BOOK_NUM):
+        book_pref = float(book['total']) / book['count']    
+    else:
+        book_pref = mean_rating
+    mat[rating['user']][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count'] + mean_rating - book_pref
 
-Ward(n_clusters = 3).fit(mat)
+kmeans_plus.kmeans_plus(mat,2)
 
 # Make predictions for each test query.
 for query in test_queries:
