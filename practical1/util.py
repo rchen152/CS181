@@ -29,10 +29,8 @@ def load_books(filename='books.csv'):
         reader = csv.reader(fh)
         header = next(reader, None)
         books = []
-        index = 0
         for row in reader:
-            books.append( { 'index':     index++,
-                            'isbn':      row[0],
+            books.append( { 'isbn':      row[0],
                             'title':     row[1],
                             'author':    row[2],
                             'publisher': row[3],

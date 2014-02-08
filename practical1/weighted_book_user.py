@@ -19,9 +19,6 @@ test_queries   = util.load_test(test_filename)
 book_list      = util.load_books(book_filename)
 user_list      = util.load_users(user_filename)
 
-sorted(user_list)
-print(user_list)
-
 # Compute the global mean rating for a fallback.
 num_train = len(training_data)
 mean_rating = float(sum(map(lambda x: x['rating'], training_data)))/num_train
@@ -40,6 +37,12 @@ for rating in training_data:
     books[rating['isbn']]['total'] += rating['rating']
     books[rating['isbn']]['count'] += 1
 
+'''dist = np.zeros((500))
+for book in book_list:
+    dist[books[book['isbn']]['count']] += 1
+for i in range(500):
+    print(str(i) + " " + str(dist[i]))'''
+
 # Turn the list of users into a dictionary.
 # Store data for each user to keep track of the per-user average.
 users = {}
@@ -53,6 +56,12 @@ for rating in training_data:
     user_id = rating['user']
     users[user_id]['total'] += rating['rating']
     users[user_id]['count'] += 1
+
+'''dist = np.zeros((5000))
+for user in user_list:
+    dist[users[user['user']]['count']] += 1
+for i in range(5000):
+    print(str(i) + " " + str(dist[i]))'''
 
 # Make predictions for each test query.
 for query in test_queries:
