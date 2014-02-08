@@ -6,11 +6,21 @@ import math
 from PIL import Image
 import os
 
+EPSILON = .0000000000000000001
+
 # assumes none of the rows are all zeros
 def kmeans_metric_corr (x, mu):
     num_pts = x.shape[0]
     dim = x.shape[1]
+    thezeros = np.zeros((dim))
     k = mu.shape[0]    
+    # loop through rows of x and mu to find rows of zeros, nudge random entry
+    for i in range(num_pts):
+        if ((x[i]==thezeros).all()):
+            x[i][random.randrange(dim)] = EPSILON
+    for i in range(k):
+        if ((mu[i]==thezeros).all()):
+            mu[i][random.randrange(dim)] = EPSILON
     fst = np.ones((num_pts,k))*np.sum(x*x, axis = 1).reshape(num_pts,1)
     snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
     prod = np.dot(x, np.transpose(mu))
@@ -34,7 +44,6 @@ def kmeans_plus(m, k):
         temp_dist = np.sum(temp_diff*temp_diff,axis = 1).reshape(num_pts,1)
         dist = np.min(np.concatenate((dist,temp_dist), axis = 1), axis =1).reshape(num_pts,1)
         normalized = (np.transpose(dist/np.sum(dist,axis = 0)))[0]
-        
     resp = np.zeros((num_pts,1))
     result = np.zeros((num_pts,k))
     while(True):    

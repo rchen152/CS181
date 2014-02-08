@@ -6,11 +6,12 @@ import kmeans_plus
 # CRITICAL_BOOK_NUM = 4
 BOOK_MEMORY_ERROR = 6
 NUM_CLUSTERS = 5
+
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'pred-book-user-mean.csv'
+pred_filename  = 'predictor-kmeans1.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
@@ -48,16 +49,16 @@ for user in user_list:
     users[user['user']] = { 'total': 0, # For storing the total of ratings.
                             'count': 0, # For storing the number of ratings.
                             }
-train_med = [rating for rating in training_data if books[rating['isbn']]['count'] > BOOK_MEMORY_ERROR]
+
+train_short = [rating for rating in training_data if books[rating['isbn']]['count'] > BOOK_MEMORY_ERROR]
     
 # Iterate over the training data to compute means.
-for rating in train_med:
+for rating in train_short:
     user_id = rating['user']
     users[user_id]['total'] += rating['rating']
     users[user_id]['count'] += 1
 
 user_short = [user for user in user_list if users[user['user']]['count'] > 0]
-train_short = [rating for rating in train_med if users[rating['user']]['count'] > 0]
 
 num_books = len(book_short)
 num_users = len(user_short)
@@ -76,51 +77,52 @@ for user in user_short:
     index += 1
 inv_user_keys = {index:user for user,index in user_keys.items()}
 
-mat = np.zeros((num_users, num_books))
+mat = np.zeros((num_users, num_books)).astype(float)
 # book_pref = 0
 for rating in train_short:
-    book = books[rating['isbn']]
+    
     user = users[rating['user']]
-    '''if (book['count'] > CRITICAL_BOOK_NUM):
+    
+    '''book = books[rating['isbn']]
+    if (book['count'] > CRITICAL_BOOK_NUM):
         book_pref = float(book['total']) / book['count']    
     else:
         book_pref = mean_rating
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count'] + mean_rating - book_pref
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']'''
+
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
 [mu,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
-cluster_ids = np.array((NUM_CLUSTERS))
+
+cluster_ids = []
 for i in range(NUM_CLUSTERS):
-    cluster_ids[i] = set()
+    cluster_ids.append(set())
 for i in range(num_users):
     cluster_ids[resp[i]].add(inv_user_keys[i])
-
 # Make predictions for each test query.
+counter = 0
 for query in test_queries:
-    book = books[query['isbn']]
     user = users[query['user']]
-
+    print counter
+    counter +=1
     # TODO global mean rating or mean rating on book?
-    if (user['count'] == 0):
-        query['rating'] = mean_rating
-    else:
-        query['rating'] = mean_rating
-
-    '''if user['count'] == 0:
-        # Perhaps we did not having any ratings in the training set.
-        # In this case, make a global mean prediction.
-        if book['count'] == 0:
-            # Perhaps we did not having any ratings in the training set.
-            # In this case, make a global mean prediction.
+    if(query['user'] in user_keys):
+        cluster = cluster_ids[resp[user_keys[query['user']]]]
+        ratings_for_book = [rating for rating in training_data if rating['isbn']==query['isbn']]
+        sum_zetas = 0
+        num_zetas = 0
+        for rating in ratings_for_book:
+            if (rating['user'] in cluster):
+                sum_zetas += rating['rating'] -float(users[rating['user']]['total'])/users[rating['user']]['count']
+                num_zetas += 1
+        if(num_zetas == 0):
             query['rating'] = mean_rating
         else:
-            # Predict the average for this book.
-            query['rating'] = float(book['total']) / book['count']    
-
+            query['rating'] = float(sum_zetas)/num_zetas + float(user['total'])/user['count']
+    
     else:
-        # Predict the average for this user.
-        query['rating'] = float(user['total']) / user['count']'''
+        query['rating'] = mean_rating
 
 # Write the prediction file.
 util.write_predictions(test_queries, pred_filename)
