@@ -6,6 +6,17 @@ import math
 from PIL import Image
 import os
 
+# assumes none of the rows are all zeros
+def kmeans_metric_corr (x, mu):
+    num_pts = x.shape[0]
+    dim = x.shape[1]
+    k = mu.shape[0]    
+    fst = np.ones((num_pts,k))*np.sum(x*x, axis = 1).reshape(num_pts,1)
+    snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
+    prod = np.dot(mat, np.transpose(mu))
+    metricMat = np.divide(prod,  np.sqrt(fst) * np.sqrt(snd))
+return metricMat
+
 # kmeans implementation initialized with kmeans++
 def kmeans_plus(m, k):
     mat = m.astype(float)
@@ -27,10 +38,7 @@ def kmeans_plus(m, k):
     resp = np.zeros((num_pts,1))
     result = np.zeros((num_pts,k))
     while(True):    
-        fst = np.ones((num_pts,k))*np.sum(mat*mat, axis = 1).reshape(num_pts,1)
-	product = np.dot(mat, np.transpose(mu))
-	snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
-	result = fst - 2*product + snd
+        result = kmeans_metric_corr(mat, mu)
 	temp_resp = np.argmin(result,axis = 1).reshape(num_pts,1)
 	if(temp_resp == resp).all():
 	     break
@@ -38,4 +46,5 @@ def kmeans_plus(m, k):
         for i in range(k):
     	    mu[i] = np.mean(mat[resp[:,0]==i,:],axis=0)
     error = math.sqrt(sum(np.min(result,axis = 1))/num_pts)
-    return error
+    print error
+    return np.array([mu,resp])
