@@ -13,9 +13,9 @@ def kmeans_metric_corr (x, mu):
     k = mu.shape[0]    
     fst = np.ones((num_pts,k))*np.sum(x*x, axis = 1).reshape(num_pts,1)
     snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
-    prod = np.dot(mat, np.transpose(mu))
-    metricMat = np.divide(prod,  np.sqrt(fst) * np.sqrt(snd))
-return metricMat
+    prod = np.dot(x, np.transpose(mu))
+    metricMat = np.ones((num_pts, k))- np.divide(prod,  np.sqrt(fst) * np.sqrt(snd))
+    return metricMat
 
 # kmeans implementation initialized with kmeans++
 def kmeans_plus(m, k):
