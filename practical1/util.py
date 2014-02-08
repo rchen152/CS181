@@ -35,7 +35,7 @@ def load_books(filename='books.csv'):
                             'author':    row[2],
                             'publisher': row[3],
                             'year':      int(row[4]) })
-    return books
+        return books
 
 def load_users(filename='users.csv'):
     """Load in the user data.
