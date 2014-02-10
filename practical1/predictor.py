@@ -5,14 +5,14 @@ import kmeans_plus
 
 # CRITICAL_BOOK_NUM = 4
 # TODO change this value depending on what your system can handle
-BOOK_MEMORY_ERROR = 10
-NUM_CLUSTERS = 10
+BOOK_MEMORY_ERROR = 5
+NUM_CLUSTERS = 15
 
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'predictor-kmeans5.csv'
+pred_filename  = 'predictor-kmeans9.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'

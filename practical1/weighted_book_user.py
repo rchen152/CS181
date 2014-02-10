@@ -1,14 +1,14 @@
 import numpy as np
 import util
 
-USER_TO_MEAN = 6.
-BOOK_TO_MEAN = 1.
+USER_TO_MEAN = 5.
+BOOK_TO_MEAN = .7
  
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'pred-weighted-book-user-mean6.csv'
+pred_filename  = 'pred-weighted-book-user-mean9.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
