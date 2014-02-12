@@ -34,3 +34,4 @@ predictor - params 5,20 - 0.89158
 predictor - params 5,2 - 0.90259
 pca_and_kmeans - params 30,6,5 -0.90373
 pca_and_kmeans - params 300,6,5 -0.90159
+pca_and_kmeans - params 30,6,5,euclidean metric - 0.89302

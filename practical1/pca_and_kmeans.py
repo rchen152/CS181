@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # CRITICAL_BOOK_NUM = 4
 # TODO change this value depending on what your system can handle
-NUM_COMPONENTS = 300
+NUM_COMPONENTS = 30
 BOOK_MEMORY_ERROR = 6
 NUM_CLUSTERS = 5
 
@@ -14,7 +14,7 @@ NUM_CLUSTERS = 5
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'pca_corr_metric2.csv'
+pred_filename  = 'pca_euclid_metric3.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
@@ -96,10 +96,11 @@ for rating in train_short:
 
 pca = PCA(n_components = NUM_COMPONENTS)
 reduced_mat = pca.fit_transform(mat)
-vars = pca.explained_variance_ratio_
+
+'''vars = pca.explained_variance_ratio_
 x = [w for w in range(NUM_COMPONENTS)]
 plt.plot(x,vars,'ro')
-plt.savefig('pca_variances.png')
+plt.savefig('pca_variances.png')'''
 
 [mu,resp] = kmeans_plus.kmeans_plus(reduced_mat, NUM_CLUSTERS)
 

@@ -27,6 +27,16 @@ def kmeans_metric_corr (x, mu):
     metricMat = np.ones((num_pts, k))- np.divide(prod,  np.sqrt(fst) * np.sqrt(snd))
     return metricMat
 
+def kmeans_euclidean_metric (x, mu):
+    num_pts = x.shape[0]
+    dim = x.shape[1]
+    k = mu.shape[0]    
+    fst = np.ones((num_pts,k))*np.sum(x*x, axis = 1).reshape(num_pts,1)
+    product = np.dot(x, np.transpose(mu))
+    snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
+    result = fst - 2*product + snd
+    return result
+
 # kmeans implementation initialized with kmeans++
 def kmeans_plus(m, k):
     mat = m.astype(float)
@@ -47,7 +57,7 @@ def kmeans_plus(m, k):
     resp = np.zeros((num_pts,1))
     result = np.zeros((num_pts,k))
     while(True):    
-        result = kmeans_metric_corr(mat, mu)
+        result = kmeans_euclidean_metric(mat, mu)
 	temp_resp = np.argmin(result,axis = 1).reshape(num_pts,1)
 	if(temp_resp == resp).all():
 	     break
