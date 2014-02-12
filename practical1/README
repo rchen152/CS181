@@ -21,6 +21,17 @@ weighted_book_user - params 3., .4 - 0.77463
 weighted_book_user - params 4., .5 - 0.77371
 weighted_book_user - params 4., .8 - 0.77295 	
 weighted_book_user - params 6., 1. - 0.77259
+weighted_book_user - params 7., .5 - 0.77489
+weighted_book_user - params 8., 8. - 0.77259
+weighted_book_user - params 5., 7. - 0.77311
 predictor - params 4,6,5 - .89
 predictor - params 4,7,10 - 0.88126
 predictor_no_zetas = params 4, 7, 10 - 0.87899
+predictor - params 5,10 - 0.89404
+predictor_no_zetas = params  5, 10 - 0.92540
+predictor - params 5,7 - 0.89702
+predictor - params 5,20 - 0.89158
+predictor - params 5,2 - 0.90259
+pca_and_kmeans - params 30,6,5 -0.90373
+pca_and_kmeans - params 300,6,5 -0.90159
+pca_and_kmeans - params 30,6,5,euclidean metric - 0.89302

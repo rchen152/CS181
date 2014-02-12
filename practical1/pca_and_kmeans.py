@@ -1,18 +1,20 @@
 import numpy as np
 import util
-from sklearn.cluster import Ward
+from sklearn.decomposition import PCA
 import kmeans_plus
+import matplotlib.pyplot as plt
 
 # CRITICAL_BOOK_NUM = 4
 # TODO change this value depending on what your system can handle
-BOOK_MEMORY_ERROR = 5
-NUM_CLUSTERS = 2
+NUM_COMPONENTS = 30
+BOOK_MEMORY_ERROR = 6
+NUM_CLUSTERS = 5
 
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'predictor-kmeans10.csv'
+pred_filename  = 'pca_euclid_metric3.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
@@ -92,7 +94,15 @@ for rating in train_short:
 
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
-[mu,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
+pca = PCA(n_components = NUM_COMPONENTS)
+reduced_mat = pca.fit_transform(mat)
+
+'''vars = pca.explained_variance_ratio_
+x = [w for w in range(NUM_COMPONENTS)]
+plt.plot(x,vars,'ro')
+plt.savefig('pca_variances.png')'''
+
+[mu,resp] = kmeans_plus.kmeans_plus(reduced_mat, NUM_CLUSTERS)
 
 cluster_ids = []
 for i in range(NUM_CLUSTERS):
