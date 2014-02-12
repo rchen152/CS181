@@ -31,3 +31,6 @@ predictor - params 5,10 - 0.89404
 predictor_no_zetas = params  5, 10 - 0.92540
 predictor - params 5,7 - 0.89702
 predictor - params 5,20 - 0.89158
+predictor - params 5,2 - 0.90259
+pca_and_kmeans - params 30,6,5 -0.90373
+pca_and_kmeans - params 300,6,5 -0.90159
