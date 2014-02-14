@@ -29,6 +29,7 @@ def cluster_images(data_batch, k, smart_init = False):
     resp = kmeans_out['resp']
     result = kmeans_out['dist']
 
+    # creates cluster directories and saves images
     for i in range(k):
         if not os.path.exists(str(i)):
             os.makedirs(str(i))
