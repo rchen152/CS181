@@ -57,7 +57,7 @@ def kmeans_plus(m, k):
     resp = np.zeros((num_pts,1))
     result = np.zeros((num_pts,k))
     while(True):    
-        result = kmeans_euclidean_metric(mat, mu)
+        result = kmeans_metric_corr(mat, mu)
 	temp_resp = np.argmin(result,axis = 1).reshape(num_pts,1)
 	if(temp_resp == resp).all():
 	     break
