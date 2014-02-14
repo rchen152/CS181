@@ -44,6 +44,7 @@ following fields:
 
 To run k-means on the CIFAR-10 and CIFAR-100 image data sets
 ------------------------------------------------------------
+
 Visit http://www.cs.toronto.edu/~kriz/cifar.html and download the python version
 of your desired data set.  Then, in a Python program, import the module
 cifar_util and call its cluster_images function.  As arguments, cluster_images
