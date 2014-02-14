@@ -19,10 +19,10 @@ To determine whether you need to download them, type at the terminal
   python
   import numpy
   import PIL
-If Python cannot find either of these modules, you can install it from your
-package manager.  For NumPy, visit http://www.scipy.org/scipylib/download.html
-and scroll to the bottom of the page to find the name of the numpy package for
-your distribution.  The PIL package is usually called pillow.
+If Python cannot find either of these, you can install it from your package
+manager.  For NumPy, visit http://www.scipy.org/scipylib/download.html and
+scroll to the bottom of the page to find the name of the numpy package for your
+distribution.  The PIL package is usually called pillow.
 
 To run k-means
 --------------
