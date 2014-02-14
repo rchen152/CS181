@@ -2,7 +2,7 @@ import numpy as np
 import random
 import math
 
-# kmeans implementation
+# k-means implementation
 def kmeans(m, k, smart_init = False):
     mat = m.astype(float)
     num_pts = mat.shape[0]
@@ -11,6 +11,7 @@ def kmeans(m, k, smart_init = False):
     mu = np.zeros((k,dim))
     result = np.zeros((num_pts,k))
 
+    # either use k-means++ or assign randomly to clusters
     if (smart_init):
         mu[0] = mat[random.randrange(num_pts)]
         diff = mat - np.ones((num_pts, dim))*mu[0]
@@ -29,15 +30,17 @@ def kmeans(m, k, smart_init = False):
         for i in range(k):
             mu[i] = np.mean(mat[resp[:,0]==i,:],axis=0)
     while(True):
+    	# compute distances between data points and cluster centers
         fst = np.ones((num_pts,k))*np.sum(mat*mat, axis = 1).reshape(num_pts,1)
 	product = np.dot(mat, np.transpose(mu))
 	snd = np.ones((num_pts,k))*np.sum(mu*mu, axis = 1)
 	result = fst - 2*product + snd
 	temp_resp = np.argmin(result,axis = 1).reshape(num_pts,1)
 
-        # comment out this line to stop printing the error to the console
+        # comment out this line to stop printing error to console
 	print math.sqrt(sum(np.min(result,axis = 1))/num_pts)
 
+	# stop looping if no change in cluster assignments
         if(temp_resp == resp).all():
 	     break
         resp = temp_resp
