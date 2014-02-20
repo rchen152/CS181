@@ -1,0 +1,58 @@
+Summary
+-------
+
+We implemented k-means clustering in Python.
+
+Files
+-----
+
+1. kmeans_warm_up.py
+2. cifar_util.py
+
+Required downloads
+------------------
+
+1. NumPy
+2. PIL (Python Imaging Library)
+Many Python installations come with these pre-installed.
+To determine whether you need to download them, type at the terminal
+  python
+  import numpy
+  import PIL
+If Python cannot find either of these, you can install it from your package
+manager.  For NumPy, visit http://www.scipy.org/scipylib/download.html and
+scroll to the bottom of the page to find the name of the numpy package for your
+distribution.  The PIL package is usually called pillow.
+
+To run k-means
+--------------
+
+In a Python program, import the module kmeans_warm_up and call its kmeans
+function.  As arguments, kmeans takes in
+  (1) m, a numpy array whose rows are the data points we wish to cluster,
+  (2) k, the desired number of clusters, and
+  (3) smart_init, optionally whether to initialize the cluster centers with
+      k-means++.  False by default.
+Let n be the number of data points.  The function returns a dictionary with the
+following fields:
+  (1) error, the final value of the cost function
+  (2) mu, a numpy array whose rows are the cluster centers
+  (3) resp, an n x 1 numpy array whose entries are the indices of each data
+      point's corresponding cluster center in mu.
+  (4) result, an n x k numpy array whose (i,j) entry is the distance of the i-th
+      data point from the j-th cluster center.
+
+To run k-means on the CIFAR-10 and CIFAR-100 image data sets
+------------------------------------------------------------
+
+Visit http://www.cs.toronto.edu/~kriz/cifar.html and download the python version
+of your desired data set.  Then, in a Python program, import the module
+cifar_util and call its cluster_images function.  As arguments, cluster_images
+takes in
+  (1) data_batch, the path to the batch of images you wish to cluster,
+  (2) k, the desired number of clusters, and
+  (3) smart_init, optionaly whether to initialize the cluster centers with
+      k-means++.  False by default.
+In the current directory, the function creates directories 0,...,k-1 and
+populates each with a cluster's mean image and all of the images belonging to
+the cluster.  The function returns the final value of the cost function.

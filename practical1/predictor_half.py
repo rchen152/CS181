@@ -8,7 +8,7 @@ import math
 # CRITICAL_BOOK_NUM = 4
 # TODO change this value depending on what your system can handle
 BOOK_MEMORY_ERROR = 8
-NUM_CLUSTERS = 5
+NUM_CLUSTERS = 8
 
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
@@ -57,22 +57,18 @@ train_short = [rating for rating in train_data if books[rating['isbn']]['count']
 
 # Turn the list of users into a dictionary.
 # Store data for each user to keep track of the per-user average.
-users = {}
+users_shortsum = {}
 for user in user_list:
-    users[user['user']] = { 'total': 0, # For storing the total of ratings.
-                            'count': 0, # For storing the number of ratings.
-                            }
+    users_shortsum[user['user']] = {'total': 0, 'count': 0}
     
 # Iterate over the training data to compute means.
 for rating in train_short:
     user_id = rating['user']
-    users[user_id]['total'] += rating['rating']
-    users[user_id]['count'] += 1
+    users_shortsum[user_id]['total'] += rating['rating']
+    users_shortsum[user_id]['count'] += 1
 
-user_short = [user for user in user_list if users[user['user']]['count'] > 0]
-
-num_books = len(book_short)
-num_users = len(user_short)
+user_short = [user for user in user_list if users_shortsum[user['user']]['count'] > 0]
+len_user_short = len(user_short)
 
 book_keys = {}
 index = 0
@@ -81,29 +77,50 @@ for book in book_short:
     index += 1
 
 user_keys = {}
-inv_user_keys = {}
 index = 0
 for user in user_short:
     user_keys[user['user']] = index
-    inv_user_keys[index] = user['user']
     index += 1
 
-mat = np.zeros((num_users, num_books)).astype(float)
-# book_pref = 0
+mat = np.zeros((len_user_short, len(book_short))).astype(float)
 for rating in train_short:
-    user = users[rating['user']]
-    
-    '''book = books[rating['isbn']]
-    if (book['count'] > CRITICAL_BOOK_NUM):
-        book_pref = float(book['total']) / book['count']    
-    else:
-        book_pref = mean_rating
-    mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count'] + mean_rating - book_pref
-    mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']'''
-
+    user = users_shortsum[rating['user']]
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
-[mu,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
+[_,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
+
+users_sum = {}
+clusters = []
+for i in range(NUM_CLUSTERS):
+    clusters.append(set())
+for i in range(len_user_short):
+    user = user_list[i]['user']
+    clusters[resp[i]].add(user)
+    users_sum[user] = {'cluster' : resp[i], 'total' : 0., 'count' : 0}
+
+for rate in train_data:
+    if (rate['user'] in users_sum):
+        users_sum[rate['user']]['total'] += rate['rating']
+        users_sum[rate['user']]['count'] += 1
+
+cluster_avgs = []
+for i in range(NUM_CLUSTERS):
+    sum_ratings = 0.
+    num_ratings = 0.
+    for user in clusters[i]:
+        sum_ratings += users_sum[user]['total']
+        num_ratings += users_sum[user]['count']
+    cluster_avgs.append(sum_ratings/num_ratings)
+
+sum_errors = 0.
+for datum in test_data:
+    if (datum['user'] in users_sum):
+        sum_errors += math.pow(cluster_avgs[users_sum[datum['user']]['cluster']] - datum['rating'], 2)
+    else:
+        sum_errors += math.pow(mean_rating - datum['rating'], 2)
+print math.sqrt(sum_errors / len(test_data))
+
+'''[mu,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
 
 cluster_ids = []
 for i in range(NUM_CLUSTERS):
@@ -128,7 +145,6 @@ for rating in train_data:
 sum_errors = 0.
 for query in test_data:
     user = users[query['user']]
-    # TODO global mean rating or mean rating on book?
     if (query['user'] in user_keys):
         cluster = cluster_ids[resp[user_keys[query['user']]]]
         sum_zetas = 0
@@ -149,4 +165,4 @@ for query in test_data:
     else:
         sum_errors += math.pow(mean_rating - query['rating'],2)
 
-print math.sqrt(sum_errors / len(test_data))
+print math.sqrt(sum_errors / len(test_data))'''

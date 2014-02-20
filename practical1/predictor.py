@@ -5,14 +5,14 @@ import kmeans_plus
 
 # CRITICAL_BOOK_NUM = 4
 # TODO change this value depending on what your system can handle
-BOOK_MEMORY_ERROR = 5
-NUM_CLUSTERS = 2
+BOOK_MEMORY_ERROR = 8
+NUM_CLUSTERS = 5
 
 # This makes predictions based on the mean rating for each book in the
 # training data.  When there are no training data for a book, it
 # defaults to the global mean.
 
-pred_filename  = 'predictor-kmeans10.csv'
+pred_filename  = 'predictor-kmeans11.csv'
 train_filename = 'ratings-train.csv'
 test_filename  = 'ratings-test.csv'
 book_filename  = 'books.csv'
@@ -92,7 +92,7 @@ for rating in train_short:
 
     mat[user_keys[rating['user']]][book_keys[rating['isbn']]] = rating['rating'] - float(user['total']) / user['count']
 
-[mu,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
+[_,resp] = kmeans_plus.kmeans_plus(mat, NUM_CLUSTERS)
 
 cluster_ids = []
 for i in range(NUM_CLUSTERS):
@@ -115,25 +115,34 @@ for rating in training_data:
     training_sorted[long_book_keys[rating['isbn']]].add((rating['user'],rating['rating']))
 
 for query in test_queries:
-    user = users[query['user']]
+    user_id = query['user']
+    user = users[user_id]
+
     # TODO global mean rating or mean rating on book?
-    if(query['user'] in user_keys):
-        cluster = cluster_ids[resp[user_keys[query['user']]]]
-        sum_zetas = 0
-        num_zetas = 0
+    if(user_id in user_keys):
+        user_mu = np.zeros((1,num_books))
+        user_mu[0] = mat[user_keys[user_id]]
+        result = kmeans_plus.kmeans_metric_corr(mat,user_mu)
+        cluster = cluster_ids[resp[user_keys[user_id]]]
+        sum_zetas = 0.
+        num_zetas = 0.
         for (use,rate) in training_sorted[long_book_keys[query['isbn']]]:
             if (use in cluster):
-                sum_zetas += rate - float(users[use]['total'])/users[use]['count']
-                num_zetas += 1
+                zeta = rate - float(users[use]['total'])/users[use]['count']
+                dist = result[user_keys[user_id]][0]
+                if (dist == 0):
+                    dist += kmeans_plus.EPSILON
+                sum_zetas += (zeta/dist)
+                num_zetas += (1./dist)
         if (num_zetas == 0):
             query['rating'] = mean_rating
         else:
-            temp_rating = float(sum_zetas)/num_zetas + float(user['total'])/user['count']
-            if(temp_rating > 5):
-                temp_rating = 5
-            if(temp_rating < 1):
-                temp_rating = 1
-            query['rating'] = temp_rating
+            tmp_rate = sum_zetas/num_zetas + float(user['total'])/user['count']
+            if(tmp_rate > 5):
+                tmp_rate = 5
+            if(tmp_rate < 1):
+                tmp_rate = 1
+            query['rating'] = tmp_rate
     else:
         query['rating'] = mean_rating
 
