@@ -3,7 +3,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
-LAMBDA = 1
+LAMBDA = 10
 
 raw_data = np.loadtxt('motorcycle.csv', dtype=str, delimiter=';')
 reader = csv.reader(raw_data, delimiter=',')
@@ -16,7 +16,7 @@ flt_data = map(lambda x: map(float,x),arr)
 num_pts = len(flt_data)
 data = np.array(flt_data)
 
-basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x : x**4,lambda x: x**5, lambda x: x**6,lambda x : x**7, lambda x: x**8, lambda x : x**9]
+basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x : x**4]
 
 
 '''basis_fns  = [lambda x: 1, lambda x: np.sin(.1*x),lambda x : np.sin(.20*x), lambda x: np.sin(.30*x), lambda x : np.sin(.40*x)]'''
@@ -30,7 +30,7 @@ for fn in (basis_fns[1:]):
 phi = np.transpose(trans)
 
 temp_pseudo = LAMBDA * np.identity(len(basis_fns))+np.dot(trans, phi)
-pseudo_inv = np.dot(np.dot(np.linalg.inv(temp_pseudo),trans),data[:,1])
+pseudo_inv = np.dot(np.linalg.inv(temp_pseudo),trans)
 
 coeffs = np.dot(pseudo_inv, data[:,1])
 print coeffs
@@ -56,4 +56,8 @@ plt.plot(x,w)
 plt.plot(x,z)
 
 plt.plot(data[:,0],data[:,1],'ro')
-plt.show()
+plt.title('Frequentist Polynomial Basis, LAMBDA = 10')
+plt.xlabel('time since impact (ms)')
+plt.ylabel('gforce')
+
+plt.savefig('freq_polys.png')
