@@ -1,0 +1,63 @@
+memorial_release
+diff 12512132.9441
+log mean diff -0.185103750164
+true  17
+false 1130
+(0.21140031233732437, 0.39800903972253082)
+--------
+summer_release
+diff 4464052.79125
+log mean diff 0.102031234204
+true  321
+false 826
+(0.076346616581053461, 0.12909031001708091)
+--------
+independence_release
+diff 18891220.7699
+log mean diff 0.0827219143857
+true  19
+false 1128
+(0.2043206420306084, 0.37513579521380236)
+--------
+labor_release
+diff -2089570.65059
+log mean diff 0.718750358487
+true  15
+false 1132
+(0.18686690223792701, 0.63263896168357647)
+--------
+christmas_release
+diff -3168745.20982
+log mean diff 1.10109887875
+true  9
+false 1138
+(0.40031243897676233, 0.083991607762118115)
+--------
+rating
+diff -4805758.87462
+log mean diff -0.103623958497
+true  425
+false 722
+(0.15734072022160661, 2.8774631300477454e-06)
+--------
+oscar_winning_directors_present
+diff 7512945.66381
+log mean diff 1.84188950668
+true  33
+false 1114
+(0.32133725042163103, 0.0019192364487279677)
+--------
+oscar_winning_actors_present
+diff 9882229.57507
+log mean diff 2.48831126365
+true  139
+false 1008
+(0.3580778234555213, 2.370159511540786e-14)
+--------
+highest_grossing_actors_present
+diff 16833383.2883
+log mean diff 3.15748898634
+true  153
+false 994
+(0.40907536723609628, 3.9133071974631234e-20)
+--------
