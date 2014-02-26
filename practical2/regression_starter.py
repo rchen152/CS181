@@ -56,7 +56,6 @@ from scipy.sparse import linalg as splinalg
 
 import util
 
-
 def extract_feats(ffs, datafile="train.xml", global_feat_dict=None):
     """
     arguments:
@@ -113,7 +112,6 @@ def extract_feats(ffs, datafile="train.xml", global_feat_dict=None):
 
     X,feat_dict = make_design_mat(fds,global_feat_dict)
     return X, feat_dict, np.array(targets), ids
-
 
 def make_design_mat(fds, global_feat_dict=None):
     """
@@ -227,7 +225,7 @@ def main():
     X_train,global_feat_dict,y_train,train_ids = extract_feats(ffs, trainfile)
     print "done extracting training features"
     print
-    
+
     # TODO train here, and return regression parameters
     print "learning..."
     learned_w = splinalg.lsqr(X_train,y_train)[0]
