@@ -6,7 +6,8 @@ except ImportError:
     import xml.etree.ElementTree as ET
 import matplotlib.pyplot as pp
 
-FEATS = ['running_time','number_of_screens','production_budget','num_oscar_winning_directors','num_highest_grossing_actors','num_oscar_winning_actors']
+#FEATS = ['running_time','number_of_screens','production_budget','num_oscar_winning_directors','num_highest_grossing_actors','num_oscar_winning_actors']
+FEATS = ['number_of_screets']
 
 def correlate(lst1, lst2):
     return np.corrcoef(np.array(lst1), np.array(lst2))[0][1]

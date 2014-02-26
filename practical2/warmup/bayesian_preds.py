@@ -4,11 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x : x**4,lambda x: x**5]
+basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x : x**4]
 #, lambda x: x**6,lambda x : x**7, lambda x: x**8, lambda x : x**9]
 
 
 '''basis_fns  = [lambda x: 1, lambda x: np.sin(.1*x),lambda x : np.sin(.20*x), lambda x: np.sin(.30*x), lambda x : np.sin(.40*x)]'''
+
 BETA = .05
 ALPHA = 1.
 basis_dim = len(basis_fns)
@@ -64,4 +65,9 @@ plt.plot(x,w)
 plt.plot(x,z)
 
 plt.plot(data[:,0],data[:,1],'ro')
-plt.show()
+plt.title('Bayesian Polynomial Basis, BETA = .05, ALPHA = 1')
+plt.xlabel('time since impact (ms)')
+plt.ylabel('gforce')
+
+plt.savefig('bayes_polys.png')
+
