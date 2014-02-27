@@ -83,8 +83,6 @@ def screens_budget_lglglg():
         preds.append(math.e**prod)
     util.write_predictions(preds, ids, 'screens_budget_lglglg-2.csv')
 
-screens_budget_lglglg()
-
 def screens_budget_summer_lglglg():
     mat,key,regy,_ = rs.extract_feats([rs.metadata_feats])
     screen_ind = key['number_of_screens']
@@ -100,21 +98,25 @@ def screens_budget_summer_lglglg():
             return 0.
         else:
             return math.log(x)
-    fns = [safelog, safelog, safelog]
-    bs_check = lambda x:x[1] > 0. && x[2] > 0.
-    bns_check = lambda x:x[1] > 0. && x[2] == 0.
-    nbs_check = lambda x:x[1] == 0. && x[2] > 0.
-    nbns_check = lambda x:x[1] == 0. && x[2] == 0.
+    fns = [safelog, safelog, safelog, safelog]
+    bs_check = lambda x:x[1] > 0. and x[2] > 0.
+    bns_check = lambda x:x[1] > 0. and x[2] == 0.
+    nbs_check = lambda x:x[1] == 0. and x[2] > 0.
+    nbns_check = lambda x:x[1] == 0. and x[2] == 0.
 
-    budget_arr = format_arr([screens,budget], regy, budget_fns, budget_check)
-    no_budget_arr = format_arr([screens],regy,[lambda x:math.log(x),lambda x:math.log(x)])
+    bs_arr = format_arr([screens,budget,summer], regy, fns, bs_check)
+    bns_arr = format_arr([screens,budget,summer], regy, fns, bns_check)
+    nbs_arr = format_arr([screens,budget,summer], regy, fns, nbs_check)
+    nbns_arr = format_arr([screens,budget,summer], regy, fns, nbns_check)
 
     budget_basis_fns = [lambda x:1, lambda x:x[0], lambda x:x[0]**2,
                         lambda x:x[1], lambda x:x[1]**2]
     no_budget_basis_fns = [lambda x:1, lambda x:x[0], lambda x:x[0]**2]
 
-    budget_coeffs = freg.coeffs(budget_basis_fns, budget_arr)
-    no_budget_coeffs = freg.coeffs(no_budget_basis_fns, no_budget_arr)
+    bs_coeffs = freg.coeffs(budget_basis_fns, bs_arr)
+    bns_coeffs = freg.coeffs(budget_basis_fns, bns_arr)
+    nbs_coeffs = freg.coeffs(no_budget_basis_fns, nbs_arr)
+    nbns_coeffs = freg.coeffs(no_budget_basis_fns, nbns_arr)
 
     test,_,_,ids = rs.extract_feats([rs.metadata_feats],'testcases.xml',
                                     global_feat_dict = key)
@@ -122,13 +124,19 @@ def screens_budget_summer_lglglg():
     preds = []
     for i in range(test_len):
         prod = 0
-        if test[i,budget_ind] > 0.:
-            x = (budget_fns[0](test[i,screen_ind]), budget_fns[1](test[i,budget_ind]))
-            prod = freg.product(x, budget_coeffs, budget_basis_fns)
-        else:
-            x = (math.log(test[i,screen_ind]),)
-            prod = freg.product(x, no_budget_coeffs, no_budget_basis_fns)
+        x = [test[i,screen_ind], test[i,budget_ind], test[i,summer_ind]]
+        logx = tuple([safelog(feat) for feat in x])
+        if bs_check(x):
+            prod = freg.product(logx, bs_coeffs, budget_basis_fns)
+        elif bns_check(x):
+            prod = freg.product(logx, bns_coeffs, budget_basis_fns)
+        elif nbs_check(x):
+            prod = freg.product(logx, nbs_coeffs, no_budget_basis_fns)
+        elif nbns_check(x):
+            prod = freg.product(logx, nbns_coeffs, no_budget_basis_fns)
         if prod < 0:
             prod = 0
         preds.append(math.e**prod)
-    util.write_predictions(preds, ids, 'screens_budget_lglglg-2.csv')
+    util.write_predictions(preds, ids, 'screens_budget_summer_lglglg-2.csv')
+
+screens_budget_summer_lglglg()
