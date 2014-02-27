@@ -1,5 +1,3 @@
-WORST
-------
 her
 film
 in
@@ -101,8 +99,6 @@ hancock
 possibilities
 writer-director
 ---------------------------------
-BEST
---------
 the
 it
 to
