@@ -14,10 +14,10 @@ flt_data = map(lambda x: map(float,x),arr)
 num_pts = len(flt_data)
 data = np.array(flt_data)
 
-basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x : x**4,lambda x: x**5, lambda x: x**6,lambda x : x**7, lambda x: x**8, lambda x : x**9]
+'''basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x : x**4]'''
 
 
-'''basis_fns  = [lambda x: 1, lambda x: np.sin(.1*x),lambda x : np.sin(.20*x), lambda x: np.sin(.30*x), lambda x : np.sin(.40*x)]'''
+basis_fns  = [lambda x: 1, lambda x: np.sin(.1*x),lambda x : np.sin(.20*x), lambda x: np.sin(.30*x), lambda x : np.sin(.40*x)]
 
 fst_fn = basis_fns[0]
 
@@ -52,4 +52,9 @@ plt.plot(x,w)
 plt.plot(x,z)
 
 plt.plot(data[:,0],data[:,1],'ro')
-plt.show()
+plt.title('Frequentist Fourier Basis, No Regularization')
+plt.xlabel('time since impact (ms)')
+plt.ylabel('gforce')
+
+plt.savefig('freq_fourier_noreg.png')
+
