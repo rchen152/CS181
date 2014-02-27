@@ -59,14 +59,19 @@ def proc_unigram_feats():
         diffs += -1.*fix*mat[mv[1]]
     for mv in max_movies:
         diffs += mat[mv[1]]
-    words = [(diffs[0,i],inv_key[i]) for i in range(num_words)]
-    worst_words = heap.nsmallest(WORD_TARGET, words)
-    best_words = heap.nlargest(WORD_TARGET, words)
 
-    for wd in worst_words:
-        print wd[1]
-    print '---------------------------------'
-    for wd in best_words:
-        print wd[1]
+    with open("english.stop") as f:
+        stop_words = set([line.strip() for line in f.readlines()])
+        words = [(diffs[0,i],inv_key[i]) for i in range(num_words)
+                 if inv_key[i] not in stop_words]
+        worst_words = heap.nsmallest(WORD_TARGET, words)
+        worst_words.sort()
+        best_words = heap.nlargest(WORD_TARGET, words)
+        best_words.sort()
+        for wd in worst_words:
+            print wd[1] + '\t' + str(wd[0])
+        print '---------------------------------'
+        for wd in best_words:
+            print wd[1] + '\t' + str(wd[0])
 
 proc_unigram_feats()
