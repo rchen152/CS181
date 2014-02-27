@@ -100,7 +100,7 @@ def screens_budget_summer_lglglg():
             return 0.
         else:
             return math.log(x)
-    fns = [lambda x : if x <= 0.math.log(x)]
+    fns = [safelog, safelog, safelog]
     bs_check = lambda x:x[1] > 0. && x[2] > 0.
     bns_check = lambda x:x[1] > 0. && x[2] == 0.
     nbs_check = lambda x:x[1] == 0. && x[2] > 0.
