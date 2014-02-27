@@ -74,4 +74,7 @@ def proc_unigram_feats():
         for wd in best_words:
             print wd[1] + '\t' + str(wd[0])
 
-proc_unigram_feats()
+def corr_words():
+    
+
+corr_words
