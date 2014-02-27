@@ -23,7 +23,7 @@ basis_fns  = [lambda x: 1, lambda x: x,lambda x : x**2, lambda x: x**3, lambda x
 
 fst_fn = basis_fns[0]
 
-trans = [map(fst_fn, arr)]
+trans = [map(fst_fn, data)]
 
 for fn in (basis_fns[1:]):
     trans = np.concatenate((trans,[map(fn, data[:,0])]),axis = 0)

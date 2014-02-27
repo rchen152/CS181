@@ -14,7 +14,9 @@ train_array[:,1] = train_regy.transpose()
 test_mat,_,_,test_ids = rs.extract_feats([rs.metadata_feats],'testcases.xml',
                                          global_feat_dict = key)
 test_screens = test_mat.getcol(key['number_of_screens']).todense()
-test_screens = test_screens.reshape((len(test_screens)))[0]
+test_screens = test_screens.reshape((len(test_screens[0])))
+print test_screens
+print len(test_screens)
 
 preds = reg.regress([lambda x:1, lambda x:x], train_array, test_screens)
-util.write_predictions(preds[0], test_ids, 'screens-1.csv')
+util.write_predictions(preds, test_ids, 'screens-1.csv')
