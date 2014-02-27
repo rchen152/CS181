@@ -7,7 +7,9 @@ def regress(basis_fns, train_data, test_data, LAMBDA = 0):
 
     fst_fn = basis_fns[0]
 
-    trans = [map(fst_fn, arr)]
+    trans = [map(fst_fn, train_data)]
+
+    num_pts = len(train_data[:,0])
 
     for fn in (basis_fns[1:]):
         trans = np.concatenate((trans,[map(fn, train_data[:,0])]),axis = 0)
