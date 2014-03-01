@@ -13,7 +13,7 @@ BOOL_FEATS = ['rating-R','highest_grossing_actors_present',
               'summer_release', 'christmas_release', 'memorial_release',
               'independence_release', 'labor_release']
 
-MOVIE_TARGET = 100
+MOVIE_TARGET = 3
 WORD_TARGET = 100
 
 def proc_metadata_feats():
@@ -68,6 +68,7 @@ def proc_unigram_feats():
         worst_words.sort()
         best_words = heap.nlargest(WORD_TARGET, words)
         best_words.sort()
+
         for wd in worst_words:
             print wd[1] + '\t' + str(wd[0])
         print '---------------------------------'
@@ -75,6 +76,18 @@ def proc_unigram_feats():
             print wd[1] + '\t' + str(wd[0])
 
 def corr_words():
-    
+    mat,key,regy,_ = rs.extract_feats([rs.unigram_feats])
 
-corr_words
+    num_data = mat.shape[0]
+    word_counts = mat.sum()
+    avg_count = word_counts / num_data
+
+    movie_count = []
+    for i in range(num_data):
+        word_count = mat[i].sum()
+        #movie_count.append(avg_count/word_count*mat[i,key['camera']])
+        movie_count.append(mat[i,key['camera']])
+
+    print np.corrcoef(np.array(movie_count), regy)[0][1]
+
+corr_words()

@@ -1,0 +1,48 @@
+Summary
+-------
+
+We implemented MLE and Bayesian linear regression in Python.
+
+Files
+-----
+
+1. reg.py
+2. motorcycle.py
+3. motorcycle.csv
+
+Required downloads
+------------------
+
+Matplotlib
+NumPy
+
+Many Python installations come with these pre-installed.
+To determine whether you need to download them, type at the terminal
+  python
+  import numpy
+  import matplotlib
+If Python cannot find either of these, you can install it from your package
+manager.  The Matplotlib package is usually called python-matplotlib.  For
+NumPy, visit http://www.scipy.org/scipylib/download.html and scroll to the
+bottom of the page to find the name of the numpy package for your distribution.
+
+To run MLE or Bayesian linear regression
+----------------------------------------
+
+In a Python program, import the module reg and call either reg.freq_reg or
+reg.bayes_reg as desired.  Both functions take as arguments
+  (1) basis_fns, a list of basis functions
+  (2) train_data, an nx2 numpy array, where n is the number of data points.
+  (3) test_data, a one-dimensional numpy array of test data.
+  (4) optionally
+      (a) for freq_reg, a regularization coefficient LAMBDA (default value 0.0).
+      (b) for bayes_reg, a noise precision parameter BETA and a precision
+      	  parameter ALPHA of the prior distribution (default values 0.05, 1.0).
+Both functions return a list of tuples (prediction, upper bound, lower bound).
+
+To run MLE and Bayesian regression on the motorcycle crash data
+---------------------------------------------------------------
+
+At the terminal, type
+  python motorcycle.py
+This generates the warm-up plots in the appendix of our write-up.
