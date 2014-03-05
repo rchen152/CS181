@@ -32,6 +32,7 @@ def screens(basis_fns, fns, inv_fn, outfile):
         if prod < 0:
             prod = 0
         preds.append(inv_fn(prod))
+
     util.write_predictions(preds, ids, outfile)
 
 def screens_idid():
@@ -73,7 +74,8 @@ def screens_budget_lglglg():
     for i in range(test_len):
         prod = 0
         if test[i,budget_ind] > 0.:
-            x = (budget_fns[0](test[i,screen_ind]), budget_fns[1](test[i,budget_ind]))
+            x = (budget_fns[0](test[i,screen_ind]),
+                 budget_fns[1](test[i,budget_ind]))
             prod = freg.product(x, budget_coeffs, budget_basis_fns)
         else:
             x = (math.log(test[i,screen_ind]),)
@@ -138,5 +140,3 @@ def screens_budget_summer_lglglg():
             prod = 0
         preds.append(math.e**prod)
     util.write_predictions(preds, ids, 'screens_budget_summer_lglglg-2.csv')
-
-screens_budget_summer_lglglg()
