@@ -19,4 +19,4 @@ def var(fr_ind):
         var_mat += diff.transpose().dot(diff)
     return var_mat
 
-sigma = sum([var(i) for i in range(len(fruits))])
+sigma = sum([counts[i]*var(i) for i in range(len(fruits))])/sum(counts)
