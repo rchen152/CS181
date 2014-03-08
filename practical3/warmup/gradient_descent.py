@@ -19,8 +19,8 @@ data = np.array(flt_data)
 len_data = len(data)
 
 inputs = data[:,1:]
+out_int = map(int, data[:,0])
 outputs = map(float, data[:,0])
-
 
 #fix these basis functions
 basis_fns = [lambda x: 1, lambda x: x[0],lambda x : x[1]]
@@ -127,4 +127,26 @@ best_y = make_y(best_w, phi_mat, softmax)
 classes = np.argmax(best_y,axis = 0)+1
 print classes
 
+x = np.linspace(4,11,100)
+i = 0
+j = 1
+def calc_line(i,j,vec):
+    return map(lambda x: -(best_w[1][i] - best_w[1][j])/(best_w[2][i] - best_w[2][j]) *x -(best_w[0][i] - best_w[0][j])/(best_w[2][i]-best_w[2][j]), vec)
 
+r = calc_line(0,1,x)
+s = calc_line(1,2,x)
+t = calc_line(2,0,x)
+
+plt.plot(x,r)
+plt.plot(x,s)
+plt.plot(x,t)
+
+fruit_labels = ['apples','oranges','lemons']
+plt_colors = ['#990000','#ff6600','#ccff33']
+for i in range(len_data):
+    plt.scatter(inputs[i][0],inputs[i][1],c = plt_colors[out_int[i]-1],label = fruit_labels[out_int[i]-1])
+
+plt.title('Logistic Regression')
+plt.xlabel('Width (cm)')
+plt.ylabel('Hieght (cm)')
+plt.savefig('logistic_reg.png')
