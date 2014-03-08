@@ -126,3 +126,5 @@ phi_mat = make_phi(inputs,basis_fns)
 best_y = make_y(best_w, phi_mat, softmax)
 classes = np.argmax(best_y,axis = 0)+1
 print classes
+
+
