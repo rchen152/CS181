@@ -71,6 +71,16 @@ def gradient(y_mat, out,phi_mat):
             grad[i][j] = sum(diff[j][n]*phi_mat[n][i] for n in range(len_data))
     return grad
 
+def grad(w_mat,out,inputs, basis, sigma):
+    phi_mat = make_phi(inputs,basis)
+    y_mat = make_y(w_mat,phi_mat,sigma)
+    return gradient(y_mat,out,phi_mat)    
+
+def grad_w(w):
+    w_mat = w.reshape(basis_len,NUM_CLASS) 
+    grad_mat = grad(w_mat,outputs,inputs,basis_fns,softmax)
+    return np.concatenate(grad_mat,axis = 1)
+
 def get_new_w(w_old, y_mat,out,phi_mat,small_const):
     grad = gradient(y_mat,out,phi_mat)
     grad_norm = math.sqrt (np.sum(np.sum(grad*grad,axis = 0),axis = 0))
@@ -100,6 +110,16 @@ def cost_fn(y_mat,t_mat):
             cost = cost - t_mat[i][j]*math.log(y_mat[i][j])
     return cost
 
+def cost(w_mat,out,inputs,basis,sigma):
+    phi_mat = make_phi(inputs,basis)
+    y_mat = make_y(w_mat,phi_mat,sigma)
+    t_mat = make_t(out)
+    return cost_fn(y_mat,t_mat)
+
+def cost_w(w):
+    w_mat = w.reshape(basis_len,NUM_CLASS)
+    return cost(w_mat,outputs,inputs,basis_fns,softmax)
+
 def find_min_w(basis, inputs, out,sigma,small_const):
     t_mat = make_t(out)
     past_w_mat = np.random.random_sample(size = (basis_len , NUM_CLASS))
@@ -119,9 +139,10 @@ def find_min_w(basis, inputs, out,sigma,small_const):
 
     return current_w_mat
 
-EPSILON = .01
-
-best_w = find_min_w(basis_fns,inputs,outputs,softmax,EPSILON)
+#init_w_mat = np.random.random_sample(size = (basis_len , NUM_CLASS))
+#init_w_mat = np.arange(basis_len*NUM_CLASS).reshape(basis_len,NUM_CLASS)
+init_w_mat = np.random.random_sample(basis_len * NUM_CLASS)
+best_w = opt.fmin_ncg(cost_w,init_w_mat,grad_w).reshape(basis_len,NUM_CLASS)
 print best_w
 phi_mat = make_phi(inputs,basis_fns)
 best_y = make_y(best_w, phi_mat, softmax)
@@ -150,4 +171,5 @@ for i in range(len_data):
 plt.title('Logistic Regression')
 plt.xlabel('Width (cm)')
 plt.ylabel('Hieght (cm)')
-plt.savefig('logistic_reg.png')
+plt.savefig('log_scipy.png')
+
