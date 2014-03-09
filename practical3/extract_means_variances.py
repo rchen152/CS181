@@ -2,6 +2,7 @@ import classification_starter as classify
 from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 NUM_MALEWARE = 15
 
@@ -41,8 +42,32 @@ def example_structure_plot():
         plt.scatter([mat[i,key['num_processes']]], [cats[i]], c=color)
     plt.show()
 
+def get_stats(key_name):
+    mat,key,cats,ids = classify.extract_feats([structure], 'train')
+    mat_len = mat.shape[0]
+    sums =  np.zeros((NUM_MALEWARE))
+    counts =  np.zeros((NUM_MALEWARE))
+    means = np.zeros((NUM_MALEWARE))
+    var = np.zeros((NUM_MALEWARE))
+    for i in range(mat_len):
+        sums[cats[i]] += mat[i,key[key_name]]
+        counts[cats[i]] += 1
+        for i in range(NUM_MALEWARE):
+            means[i] = sums[i]/counts[i]
+    for i in range(mat_len):
+        var[cats[i]] += (mat[i,key[key_name]] - means[cats[i]])**2
 
-mat,key,cats,ids = classify.extract_feats([syscalls], 'train')
+    for i in range(NUM_MALEWARE):
+        var[i] = var[i]/counts[i]
+    std = np.zeros((NUM_MALEWARE))
+    std = map(math.sqrt,var)
+    return (means,var,std)
+
+print get_stats('num_processes')
+
+
+
+'''mat,key,cats,ids = classify.extract_feats([syscalls], 'train')
 counts = np.asarray(mat.sum(axis=0))[0]
 prop_mat = np.zeros((16, mat.shape[1]))
 prop_mat[prop_mat.shape[0]-1] = counts
@@ -56,4 +81,4 @@ for i in range(prop_mat.shape[0]):
     out = ''
     for x in prop_mat[i]:
         out += str(x) + '\t'
-    print out[:-1]
+    print out[:-1]'''
