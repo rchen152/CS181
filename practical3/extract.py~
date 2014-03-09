@@ -1,0 +1,18 @@
+import classification_starter as classify
+from collections import Counter
+
+def structure(tree):
+    c = Counter()
+    in_all_section = False
+    for node in tree.iter():
+        if node.tag == 'in_process':
+            c['num_processes'] += 1
+        elif node.tag == 'thread':
+            c['num_threads'] += 1
+        elif node.tag == 'all_section' and not in_all_section:
+            in_all_section = True
+        elif node.tag == 'all_section' and in_all_section:
+            in_all_section = False
+        elif in_all_section:
+            c['num_sys_calls'] += 1
+    return c
