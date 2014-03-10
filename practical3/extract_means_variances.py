@@ -52,8 +52,8 @@ def get_stats(key_name):
     for i in range(mat_len):
         sums[cats[i]] += mat[i,key[key_name]]
         counts[cats[i]] += 1
-        for i in range(NUM_MALEWARE):
-            means[i] = sums[i]/counts[i]
+    for i in range(NUM_MALEWARE):
+        means[i] = sums[i]/counts[i]
     for i in range(mat_len):
         var[cats[i]] += (mat[i,key[key_name]] - means[cats[i]])**2
 
@@ -63,8 +63,21 @@ def get_stats(key_name):
     std = map(math.sqrt,var)
     return (means,var,std)
 
-print get_stats('num_processes')
-
+g= get_stats('num_processes')
+print 'processes'
+print g[0]
+print g[1]
+print g[2]
+g= get_stats('num_threads')
+print 'threads'
+print g[0]
+print g[1]
+print g[2]
+g= get_stats('num_syscalls')
+print 'syscalls'
+print g[0]
+print g[1]
+print g[2]
 
 
 '''mat,key,cats,ids = classify.extract_feats([syscalls], 'train')
