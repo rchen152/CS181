@@ -44,16 +44,13 @@ def example_structure_plot():
     plt.show()
 
 mat,key,cats,_   = classify.extract_feats([syscalls], 'train')
-mat = np.asarray(mat)
+mat = np.asarray(mat.todense())
 test_mat,_,_,ids = classify.extract_feats([syscalls], direc='test',
                                           global_feat_dict = key)
-test_mat = np.asarray(test_mat)
-preds = []
+test_mat = np.asarray(test_mat.todense())
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
-for i in range(test_mat.shape[0]):
-    preds.append(clf.predict(test_mat[i]))
-util.write_predictions(preds,ids,'syscall_count_by_type-1.csv')
+util.write_predictions(clf.predict(test_mat),ids,'syscall_count_by_type-1.csv')
 
 '''counts = np.asarray(mat.sum(axis=0))[0]
 
