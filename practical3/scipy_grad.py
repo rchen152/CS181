@@ -5,20 +5,22 @@ import matplotlib.pyplot as plt
 import math
 import scipy.optimize as opt
 import classification_starter as classify
-import extract
+import extract_run
+import pickle
 
 NUM_CLASS = 15
 
-mat,key,cats,_  = extract.classify.extract_feats([extract.structure], 'train')
-inputs = np.asarray(mat.todense())
-test_mat,_,_,ids = classify.extract_feats([extract.structure], direc='test',
-                                          global_feat_dict = key)
+matrix_train = open('counts_train', 'rb')
+mat,key,cats = pickle.load(matrix_train)
+print mat.shape[1]
+matrix_test = open('counts_test', 'rb')
+test_mat,ids = pickle.load(matrix_test)
 
-test_mat = np.asarray(test_mat.todense())
+inputs = mat
 outputs = map(float, cats)
 
 #fix these basis functions
-basis_fns = [lambda x: 1, lambda x: x[0],lambda x : x[1]]
+basis_fns = [lambda x: 1, lambda x: x[0],lambda x : x[1],lambda x: x[2]]
 basis_len = len(basis_fns)
 
 def softmax(vec):
@@ -133,6 +135,7 @@ def find_min_w(basis, inputs, out,sigma,small_const):
 
     return current_w_mat
 
+#init_w_mat = np.ones((basis_len * NUM_CLASS))
 #init_w_mat = np.random.random_sample(size = (basis_len , NUM_CLASS))
 #init_w_mat = np.arange(basis_len*NUM_CLASS).reshape(basis_len,NUM_CLASS)
 init_w_mat = np.random.random_sample(basis_len * NUM_CLASS)

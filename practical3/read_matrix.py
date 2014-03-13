@@ -18,7 +18,7 @@ test_mat,ids = pickle.load(matrix_test)
 
 
 clf = tree.DecisionTreeClassifier()
-clf = clf.fit(mat,cats)
+clf = clf.fit(matrix_train,cats)
 util.write_predictions(clf.predict(test_mat),ids,'syscall_count_by_type-1.csv')
 
 
