@@ -3,6 +3,9 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import tree
+import StringIO
+from sklearn.externals.six import StringIO
+import pydot
 import util
 
 NUM_MALEWARE = 15
@@ -43,47 +46,17 @@ def example_structure_plot():
         plt.scatter([mat[i,key['num_processes']]], [cats[i]], c=color)
     plt.show()
 
-mat,key,cats,_   = classify.extract_feats([syscalls], 'train')
-mat = np.asarray(mat)
+'''mat,key,cats,_   = classify.extract_feats([syscalls], 'train')
+mat = np.asarray(mat.todense())
 test_mat,_,_,ids = classify.extract_feats([syscalls], direc='test',
                                           global_feat_dict = key)
-test_mat = np.asarray(test_mat)
-preds = []
+test_mat = np.asarray(test_mat.todense())
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
-for i in range(test_mat.shape[0]):
-    preds.append(clf.predict(test_mat[i]))
-util.write_predictions(preds,ids,'syscall_count_by_type-1.csv')
+util.write_predictions(clf.predict(test_mat),ids,'syscall_count_by_type-1.csv')
 
-'''counts = np.asarray(mat.sum(axis=0))[0]
-
-mat,key,cats,ids = classify.extract_feats([syscalls], 'train')
-counts = np.asarray(mat.sum(axis=0))[0]
->>>>>>> 1509fe5b75b5f478f467bb6aaeb03b7f02c47730
-prop_mat = np.zeros((16, mat.shape[1]))
-prop_mat[prop_mat.shape[0]-1] = counts
-cat_counts = np.zeros((16))
-cat_counts[15] = mat.shape[0]
-for i in range(mat.shape[0]):
-    prop_mat[cats[i]] += mat[i]
-    cat_counts[cats[i]] += 1
-for i in range(prop_mat.shape[0]):
-    prop_mat[i] /= cat_counts[i]
-    out = ''
-    for x in prop_mat[i]:
-        out += str(x) + '\t'
-    print out[:-1]
-
-calltype_counts = np.zeros((prop_mat.shape[1]))
-theones = np.ones((prop_mat.shape[1]))
-sq_sum = np.zeros((prop_mat.shape[1]))
-for i in range(mat.shape[0]):
-    if cats[i] == 8:
-        calltype_counts += theones
-        diff = np.asarray(mat[i] - prop_mat[8])[0]
-        sq_sum += diff * diff
-sd = sq_sum / (calltype_counts - 1)
-sd_out = ''
-for i in range(prop_mat.shape[1]):
-    sd_out += str(sd[i]) + '\t'
-print sd_out[:-1]'''
+dot_data = StringIO.StringIO() 
+tree.export_graphviz(clf, out_file=dot_data) 
+graph = pydot.graph_from_dot_data(dot_data.getvalue()) 
+graph.write_pgn("tree_some.pgn")
+'''
