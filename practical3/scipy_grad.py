@@ -4,27 +4,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import scipy.optimize as opt
+import classification_starter as classify
+import extract_run
+import pickle
 
-NUM_CLASS = 3
+NUM_CLASS = 15
 
-raw_data = np.loadtxt('fruit.csv', dtype=str, delimiter=';')
-reader = csv.reader(raw_data, delimiter=',')
-init = []
+matrix_train = open('counts_train', 'rb')
+mat,key,cats = pickle.load(matrix_train)
+print mat.shape[1]
+matrix_test = open('counts_test', 'rb')
+test_mat,ids = pickle.load(matrix_test)
 
-for row in reader:
-    init.append(row)
-arr = init[1:]
-flt_data = map(lambda x: map(float,x),arr)
-num_pts = len(flt_data)
-data = np.array(flt_data)
-len_data = len(data)
-
-inputs = data[:,1:]
-out_int = map(int, data[:,0])
-outputs = map(float, data[:,0])
+inputs = mat
+outputs = map(float, cats)
 
 #fix these basis functions
-basis_fns = [lambda x: 1, lambda x: x[0],lambda x : x[1]]
+basis_fns = [lambda x: 1, lambda x: x[0],lambda x : x[1],lambda x: x[2]]
 basis_len = len(basis_fns)
 
 def softmax(vec):
@@ -33,23 +29,23 @@ def softmax(vec):
 
 def make_y(w_mat,phi_mat,sigma):
     product = np.dot(w_mat.transpose(),phi_mat.transpose())
-    temp_mat = np.zeros(((NUM_CLASS,len_data)))
-    for i in range(len_data):
+    temp_mat = np.zeros(((NUM_CLASS,len(phi_mat))))
+    for i in range(len(phi_mat)):
         temp_mat[:,i] = sigma(product[:,i]).transpose()
     return temp_mat
 
 def make_t(out):
-    output_mat = np.zeros(( (NUM_CLASS, len_data) ))
+    output_mat = np.zeros(( (NUM_CLASS, len(out)) ))
     nat_arr = np.arange(NUM_CLASS)+1
-    for i in range(len_data):
+    for i in range(len(out)):
         output_mat[:,i] = (out[i] == nat_arr)    
     return output_mat
 
 def hessian(y_mat, phi_mat):
     diag_mat = np.diag(np.sum(y_mat,axis = 1))
     key_mat =  diag_mat - np.dot(y_mat,y_mat.transpose())
-    kronecker_mat = np.zeros(((len_data, NUM_CLASS * basis_len,NUM_CLASS * basis_len)))
-    for i in range (len_data):
+    kronecker_mat = np.zeros(((len(phi_mat), NUM_CLASS * basis_len,NUM_CLASS * basis_len)))
+    for i in range (len(phi_mat)):
         outer = np.outer(phi_mat[i],phi_mat[i])
         kronecker_mat[i] = np.kron(key_mat, outer)
     return np.sum(kronecker_mat,axis = 0)
@@ -68,7 +64,7 @@ def gradient(y_mat, out,phi_mat):
     grad = np.zeros(( (basis_len,NUM_CLASS) ))
     for i in range(basis_len):
         for j in range(NUM_CLASS):
-            grad[i][j] = sum(diff[j][n]*phi_mat[n][i] for n in range(len_data))
+            grad[i][j] = sum(diff[j][n]*phi_mat[n][i] for n in range(len(phi_mat)))
     return grad
 
 def grad(w_mat,out,inputs, basis, sigma):
@@ -97,8 +93,8 @@ def get_new_w_hessian(w_old, y_mat, out, phi_mat):
     return np.concatenate(bracket_split, axis = 0)
 
 def make_phi(inputs,basis):
-    phi_mat = np.zeros(( (len_data, basis_len) ))
-    for i in range(len_data):
+    phi_mat = np.zeros(( (len(inputs), basis_len) ))
+    for i in range(len(inputs)):
         for j in range(basis_len):
             phi_mat[i,j] = basis[j](inputs[i])
     return phi_mat
@@ -106,7 +102,7 @@ def make_phi(inputs,basis):
 def cost_fn(y_mat,t_mat):
     cost = 0.
     for i in range(NUM_CLASS):
-        for j in range(len_data):
+        for j in range(y_mat.shape[1]):
             cost = cost - t_mat[i][j]*math.log(y_mat[i][j])
     return cost
 
@@ -139,37 +135,13 @@ def find_min_w(basis, inputs, out,sigma,small_const):
 
     return current_w_mat
 
+#init_w_mat = np.ones((basis_len * NUM_CLASS))
 #init_w_mat = np.random.random_sample(size = (basis_len , NUM_CLASS))
 #init_w_mat = np.arange(basis_len*NUM_CLASS).reshape(basis_len,NUM_CLASS)
 init_w_mat = np.random.random_sample(basis_len * NUM_CLASS)
 best_w = opt.fmin_ncg(cost_w,init_w_mat,grad_w).reshape(basis_len,NUM_CLASS)
 print best_w
-phi_mat = make_phi(inputs,basis_fns)
+phi_mat = make_phi(test_mat,basis_fns)
 best_y = make_y(best_w, phi_mat, softmax)
-classes = np.argmax(best_y,axis = 0)+1
-print classes
-
-x = np.linspace(4,11,100)
-i = 0
-j = 1
-def calc_line(i,j,vec):
-    return map(lambda x: -(best_w[1][i] - best_w[1][j])/(best_w[2][i] - best_w[2][j]) *x -(best_w[0][i] - best_w[0][j])/(best_w[2][i]-best_w[2][j]), vec)
-
-r = calc_line(0,1,x)
-s = calc_line(1,2,x)
-t = calc_line(2,0,x)
-
-plt.plot(x,r)
-plt.plot(x,s)
-plt.plot(x,t)
-
-fruit_labels = ['apples','oranges','lemons']
-plt_colors = ['#990000','#ff6600','#ccff33']
-for i in range(len_data):
-    plt.scatter(inputs[i][0],inputs[i][1],c = plt_colors[out_int[i]-1],label = fruit_labels[out_int[i]-1])
-
-plt.title('Logistic Regression')
-plt.xlabel('Width (cm)')
-plt.ylabel('Hieght (cm)')
-plt.savefig('log_scipy.png')
-
+classes = np.argmax(best_y,axis = 0)
+util.write_predictions(classes,ids,'logistic_reg-1.csv')

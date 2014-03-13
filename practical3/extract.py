@@ -4,6 +4,9 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import tree
+import StringIO
+from sklearn.externals.six import StringIO
+import pydot
 import util
 
 NUM_MALWARE = 15
