@@ -1,151 +1,116 @@
 import classification_starter as classify
 from collections import Counter
+import math
 import matplotlib.pyplot as plt
 import numpy as np
+import pydot
+import random
 from sklearn import tree
 import StringIO
-from sklearn.externals.six import StringIO
-import pydot
 import util
 
-NUM_MALEWARE = 15
-
-def ms(time):
-    mins = time[:2]
-    secs = time[3:5]
-    millisecs = time[6:]
-    return (int(mins) * 60000) + (int(secs) * 1000) + int(millisecs)
-
-def structure(tree):
-    c = Counter()
-    c['num_processes'] = 0.
-    c['num_threads'] = 0.
-    c['num_syscalls'] = 0.
-    c['avg_process_file_size'] = 0.
-    c['avg_process_runtime'] = 0.
-    c['max_num_threads_per_process'] = -1
-    c['min_num_threads_per_process'] = 1000000
-    c['max_num_syscalls_per_process'] = -1
-    c['min_num_syscalls_per_process'] = 1000000
-    c['max_num_syscalls_per_thread'] = -1
-    c['min_num_syscalls_per_thread'] = 1000000
-
-    thread_list = []
-    calls_per_process_list = []
-    calls_per_thread_list = []
-
-    for p in tree.iter('process'):
-        size = int(p.attrib['filesize'])
-        if size < 0:
-            size = 0
-        c['avg_process_file_size'] += size
-        time = ms(p.attrib['terminationtime']) - ms(p.attrib['starttime'])
-        if time < 0:
-            time = 0
-        c['avg_process_runtime'] += time
-
-        num_threads = len(p)
-        num_syscalls = 0
-        for sec in p.iter('all_section'):
-            num_calls = 0
-            for _ in sec.iter():
-                num_calls += 1
-            if c['max_num_syscalls_per_thread'] < num_calls:
-                c['max_num_syscalls_per_thread'] = num_calls
-            if c['min_num_syscalls_per_thread'] > num_calls:
-                c['min_num_syscalls_per_thread'] = num_calls
-            num_syscalls += num_calls
-            calls_per_thread_list.append(num_calls)
-        if c['max_num_threads_per_process'] < num_threads:
-            c['max_num_threads_per_process'] = num_threads
-        if c['min_num_threads_per_process'] > num_threads:
-            c['min_num_threads_per_process'] = num_threads
-
-        if c['max_num_syscalls_per_process'] < num_syscalls:
-            c['max_num_syscalls_per_process'] = num_syscalls
-        if c['min_num_syscalls_per_process'] > num_syscalls:
-            c['min_num_syscalls_per_process'] = num_syscalls
-
-        c['num_processes'] += 1.
-        c['num_threads'] += num_threads
-        c['num_syscalls'] += num_syscalls
-
-        thread_list.append(num_threads)
-        calls_per_process_list.append(num_syscalls)
-
-    c['avg_process_file_size'] /= c['num_processes']
-    c['avg_process_runtime'] /= c['num_processes']
-    c['avg_num_threads_per_process'] = c['num_threads']/c['num_processes']
-    c['avg_num_syscalls_per_process'] = c['num_syscalls']/c['num_processes']
-    c['avg_num_syscalls_per_thread'] = c['num_syscalls']/c['num_threads']
-
-    c['sd_num_threads_per_process'] = 0.
-    c['sd_num_syscalls_per_process'] = 0.
-    c['sd_num_syscalls_per_thread'] = 0.
-
-    for t in thread_list:
-        diff = t - c['avg_num_threads_per_process']
-        c['sd_num_threads_per_process'] += diff * diff
-    for sc in calls_per_process_list:
-        diff = sc - c['avg_num_syscalls_per_process']
-        c['sd_num_syscalls_per_process'] += diff * diff
-    for sc in calls_per_thread_list:
-        diff = sc - c['avg_num_syscalls_per_thread']
-        c['sd_num_syscalls_per_thread'] += diff * diff
-
-    c['sd_num_threads_per_process'] /= c['num_processes']
-    c['sd_num_syscalls_per_process'] /= c['num_processes']
-    c['sd_num_syscalls_per_thread'] /= c['num_threads']
-
-    return c
+NUM_MALWARE = 15
 
 def syscalls(tree):
-    bad_tags = ['processes', 'process', 'thread', 'all_section']
     calls = {}
-    for node in tree.iter():
-        if node.tag in bad_tags:
-            continue
-        if node.tag not in calls:
-            calls[node.tag] = 1.
-        else:
-            calls[node.tag] += 1.
+    for sec in tree.iter('all_section'):
+        for call in sec.iter():
+            if call.tag == 'all_section':
+                continue
+            elif call.tag not in calls:
+                calls[call.tag] = 1.
+            else:
+                calls[call.tag] += 1.
     return calls
 
-def example_structure_plot():
-    mat,key,cats,_ = classify.extract_feats([structure], 'train')
-    for i in range(mat.shape[0]):
-        color = 'red'
-        if cats[i] == 8:
-            color = 'black'
-        plt.scatter([mat[i,key['num_processes']]], [cats[i]], c=color)
-    plt.show()
+def syscall_count_by_type():
+    mat,key,cats,_ = classify.extract_feats([syscalls], 'train')
+    mat = np.asarray(mat.todense())
+    test_mat,_,_,ids = classify.extract_feats([syscalls], direc='test',
+                                              global_feat_dict = key)
+    test_mat = np.asarray(test_mat.todense())
+    clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(mat,cats)
+    util.write_predictions(clf.predict(test_mat),ids,
+                           'syscall_count_by_type-3.csv')
 
-'''mat,key,cats,_   = classify.extract_feats([syscalls], 'train')
-
-def print_syscall_counts_by_type():
+def syscall_means_and_vars():
     mat,key,cats,ids = classify.extract_feats([syscalls], 'train')
-    counts = np.asarray(mat.sum(axis=0))[0]
-    prop_mat = np.zeros((16, mat.shape[1]))
-    prop_mat[prop_mat.shape[0]-1] = counts
-    cat_counts = np.zeros((16))
-    cat_counts[15] = mat.shape[0]
+    prop_mat = np.zeros((NUM_MALWARE, mat.shape[1]))
+    cat_counts = np.zeros((NUM_MALWARE))
     for i in range(mat.shape[0]):
-        prop_mat[cats[i]] += mat[i]
+        prop_mat[cats[i]] += np.asarray(mat[i].todense())[0]
         cat_counts[cats[i]] += 1
-    for i in range(prop_mat.shape[0]):
+    for i in range(NUM_MALWARE):
         prop_mat[i] /= cat_counts[i]
-    out = ''
-    for x in prop_mat[i]:
-        out += str(x) + '\t'
-    print out[:-1]
+    var_mat = np.zeros((NUM_MALWARE, mat.shape[1]))
+    for i in range(mat.shape[0]):
+        diff = np.asarray(mat[i].todense())[0] - prop_mat[cats[i]]
+        var_mat[cats[i]] += diff * diff
+    for i in range(NUM_MALWARE):
+        var_mat[i] /= (cat_counts[i] - 1)
+    return (prop_mat, var_mat)
 
-mat,key,cats,_ = classify.extract_feats([structure,syscalls], 'train')
+def print_means_and_vars(prop_mat, var_mat):
+    for i in range(prop_mat.shape[0]):
+        out = ''
+        for j in range(prop_mat.shape[1]):
+            out += str(prop_mat[i,j]) + '\t' + str(var_mat[i,j]) + '\t\t'
+        print out[:-2]
+
+def filter(prop_mat, var_mat, m = 1., n = 1.):
+    keep = np.zeros(prop_mat.shape)
+    for i in range(prop_mat.shape[0]):
+        for j in range(prop_mat.shape[1]):
+            mean_diff = math.fabs(prop_mat[i,j] - prop_mat[8,j])
+            sd_sum = (m*math.sqrt(var_mat[i,j])) + (n*math.sqrt(var_mat[8,j]))
+            if mean_diff > sd_sum:
+                keep[i,j] = 1
+    return keep
+
+def split_data(mat,cat,split=7):
+    mats = [[] for i in range(split)]
+    cats = [[] for i in range(split)]
+    for i in range(mat.shape[0]):
+        ind = random.randint(0,split-1)
+        mats[ind].append(mat[i])
+        cats[ind].append(cat[i])
+    mats = [np.array(mat) for mat in mats]
+    cats = [np.array(cat) for cat in cats]
+    return (mats,cats)
+
+def join_data(mats,cats):
+    mat = []
+    cat = []
+    for i in range(len(mats)):
+        for j in range(mats[i].shape[0]):
+            mat.append(mats[i][j])
+            cat.append(cats[i][j])
+    return (np.array(mat),np.array(cat))
+
+def test_depth(mat,cat,depth,split=7):
+    mats,cats = split_data(mat,cat,split)
+    correct = 0.
+    for i in range(split):
+        train_mats = [mats[j] for j in range(split) if not i == j]
+        train_cats = [cats[j] for j in range(split) if not i == j]
+        train_mat, train_cat = join_data(train_mats, train_cats)
+        test_mat, test_cat = mats[i], cats[i]
+        clf = tree.DecisionTreeClassifier(max_depth = depth)
+        clf = clf.fit(train_mat,train_cat)
+        pred_cat = clf.predict(test_mat)
+        for i in range(len(test_cat)):
+            if test_cat[i] == pred_cat[i]:
+                correct += 1.
+    return correct / len(cat)
+
+mat,_,cat,_ = classify.extract_feats([syscalls], 'train')
 mat = np.asarray(mat.todense())
-test_mat,_,_,ids = classify.extract_feats([syscalls], direc='test',
-                                          global_feat_dict = key)
-test_mat = np.asarray(test_mat.todense())
-clf = tree.DecisionTreeClassifier()
-clf = clf.fit(mat,cats)
-
-util.write_predictions(clf.predict(test_mat),ids,'everything-1.csv')'''
-
+xs = range(1,50)
+ys = []
+for d in xs:
+    score = test_depth(mat, cat, depth = d, split = 7)
+    print score
+    ys.append(score)
+plt.scatter(xs,ys)
+plt.show()
