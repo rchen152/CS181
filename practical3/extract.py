@@ -3,6 +3,7 @@ from collections import Counter
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 import pydot
 import random
 from sklearn import tree
@@ -24,28 +25,25 @@ def syscalls(tree):
     return calls
 
 def syscall_count_by_type():
-    mat,key,cats,_ = classify.extract_feats([syscalls], 'train')
-    mat = np.asarray(mat.todense())
-    test_mat,_,_,ids = classify.extract_feats([syscalls], direc='test',
-                                              global_feat_dict = key)
-    test_mat = np.asarray(test_mat.todense())
+    mat,key,cats = pickle.load(open('matrix_train', 'rb'))
+    test_mat,ids = pickle.load(open('matrix_test', 'rb'))
     clf = tree.DecisionTreeClassifier()
     clf = clf.fit(mat,cats)
     util.write_predictions(clf.predict(test_mat),ids,
                            'syscall_count_by_type-3.csv')
 
 def syscall_means_and_vars():
-    mat,key,cats,ids = classify.extract_feats([syscalls], 'train')
+    mat,key,cats = pickle.load(open('matrix_train', 'rb'))
     prop_mat = np.zeros((NUM_MALWARE, mat.shape[1]))
     cat_counts = np.zeros((NUM_MALWARE))
     for i in range(mat.shape[0]):
-        prop_mat[cats[i]] += np.asarray(mat[i].todense())[0]
+        prop_mat[cats[i]] += mat[i]
         cat_counts[cats[i]] += 1
     for i in range(NUM_MALWARE):
         prop_mat[i] /= cat_counts[i]
     var_mat = np.zeros((NUM_MALWARE, mat.shape[1]))
     for i in range(mat.shape[0]):
-        diff = np.asarray(mat[i].todense())[0] - prop_mat[cats[i]]
+        diff = mat[i] - prop_mat[cats[i]]
         var_mat[cats[i]] += diff * diff
     for i in range(NUM_MALWARE):
         var_mat[i] /= (cat_counts[i] - 1)
@@ -104,13 +102,25 @@ def test_depth(mat,cat,depth,split=7):
                 correct += 1.
     return correct / len(cat)
 
-mat,_,cat,_ = classify.extract_feats([syscalls], 'train')
-mat = np.asarray(mat.todense())
-xs = range(1,50)
-ys = []
-for d in xs:
-    score = test_depth(mat, cat, depth = d, split = 7)
-    print score
-    ys.append(score)
-plt.scatter(xs,ys)
-plt.show()
+def plot_cross_validation():
+    mat,_,cat = pickle.load(open('matrix_train', 'rb'))
+    xs = range(1,50)
+    ys = []
+    for d in xs:
+        score = test_depth(mat, cat, depth = d, split = 7)
+        print score
+        ys.append(score)
+    plt.scatter(xs,ys)
+    plt.show()
+
+def pickle_syscalls():
+    mat,key,cats,_   = classify.extract_feats([syscalls], 'train')
+    mat = np.asarray(mat.todense())
+    matrix_train = open('matrix_train', 'wb')
+    pickle.dump((mat,key,cats),matrix_train)
+
+    test_mat,_,_,ids = classify.extract_feats([syscalls], direc='test',
+                                              global_feat_dict = key)
+    test_mat = np.asarray(test_mat.todense())
+    matrix_test = open('matrix_test', 'wb')
+    pickle.dump((test_mat,ids),matrix_test)

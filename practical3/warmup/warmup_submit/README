@@ -1,0 +1,36 @@
+Summary
+-------
+
+We implemented two classification models in Python.
+
+Files
+-----
+
+1. logistic_reg.py
+2. gaussian.py
+3. fruit.csv
+
+Required downloads
+------------------
+
+Matplotlib
+NumPy
+
+Many Python installations come with these pre-installed.
+To determine whether you need to download them, type at the terminal
+  python
+  import numpy
+  import matplotlib
+If Python cannot find either of these, you can install it from your package
+manager.  The Matplotlib package is usually called python-matplotlib.  For
+NumPy, visit http://www.scipy.org/scipylib/download.html and scroll to the
+bottom of the page to find the name of the numpy package for your distribution.
+
+To classify the data in fruit.csv
+---------------------------------
+At the terminal type
+    python logistic_reg.py
+to get a plot of the data and decision boundaries for logistic regression and
+    python gaussian.py
+to get a plot of the data and decision boundaries for a generative classifier
+with Gaussian class-conditional densities.
