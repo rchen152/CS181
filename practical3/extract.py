@@ -3,10 +3,10 @@ from collections import Counter
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import pydot
+import random
 from sklearn import tree
 import StringIO
-from sklearn.externals.six import StringIO
-import pydot
 import util
 
 NUM_MALWARE = 15
@@ -68,9 +68,49 @@ def filter(prop_mat, var_mat, m = 1., n = 1.):
                 keep[i,j] = 1
     return keep
 
-prop_mat, var_mat = syscall_means_and_vars()
-keep = filter(prop_mat, var_mat)
-keep_cols = keep.sum(axis = 0)
-for i in range(len(keep_cols)):
-    if keep_cols[i] > 0:
-        print i
+def split_data(mat,cat,split=7):
+    mats = [[] for i in range(split)]
+    cats = [[] for i in range(split)]
+    for i in range(mat.shape[0]):
+        ind = random.randint(0,split-1)
+        mats[ind].append(mat[i])
+        cats[ind].append(cat[i])
+    mats = [np.array(mat) for mat in mats]
+    cats = [np.array(cat) for cat in cats]
+    return (mats,cats)
+
+def join_data(mats,cats):
+    mat = []
+    cat = []
+    for i in range(len(mats)):
+        for j in range(mats[i].shape[0]):
+            mat.append(mats[i][j])
+            cat.append(cats[i][j])
+    return (np.array(mat),np.array(cat))
+
+def test_depth(mat,cat,depth,split=7):
+    mats,cats = split_data(mat,cat,split)
+    correct = 0.
+    for i in range(split):
+        train_mats = [mats[j] for j in range(split) if not i == j]
+        train_cats = [cats[j] for j in range(split) if not i == j]
+        train_mat, train_cat = join_data(train_mats, train_cats)
+        test_mat, test_cat = mats[i], cats[i]
+        clf = tree.DecisionTreeClassifier(max_depth = depth)
+        clf = clf.fit(train_mat,train_cat)
+        pred_cat = clf.predict(test_mat)
+        for i in range(len(test_cat)):
+            if test_cat[i] == pred_cat[i]:
+                correct += 1.
+    return correct / len(cat)
+
+mat,_,cat,_ = classify.extract_feats([syscalls], 'train')
+mat = np.asarray(mat.todense())
+xs = range(1,50)
+ys = []
+for d in xs:
+    score = test_depth(mat, cat, depth = d, split = 7)
+    print score
+    ys.append(score)
+plt.scatter(xs,ys)
+plt.show()
