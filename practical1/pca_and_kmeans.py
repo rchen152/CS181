@@ -4,6 +4,7 @@ from sklearn.decomposition import PCA
 import kmeans_plus
 import matplotlib.pyplot as plt
 
+# Durr hurr hurr
 # CRITICAL_BOOK_NUM = 4
 # TODO change this value depending on what your system can handle
 NUM_COMPONENTS = 30
