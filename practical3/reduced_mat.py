@@ -7,7 +7,7 @@ mat,key,cats = pickle.load(matrix_train)
 
 matrix_test = open('matrix_test', 'rb')
 test_mat,ids = pickle.load(matrix_test)
-clfr = tree.DecisionTreeClassifier()
+clfr = tree.DecisionTreeClassifier(max_depth=20)
 clfr = clfr.fit(mat,cats)
 imp = clfr.feature_importances_
 index =0
@@ -29,9 +29,12 @@ print len(l_reb)
 print len(best_list_int)
 
 
-reduced_train = mat[:,best_list_union]
-reduced_test = test_mat[:,best_list_union]
+#reduced_train = mat[:,best_list_union]
+#reduced_test = test_mat[:,best_list_union]
+
+reduced_train = mat
+reduced_test = test_mat
 
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(reduced_train,cats)
-util.write_predictions(clf.predict(reduced_test),ids,'top_list-union-2.csv')
+util.write_predictions(clf.predict(reduced_test),ids,'depth-20.csv')

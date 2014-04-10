@@ -134,7 +134,33 @@ j = 1
 def calc_line(i,j,vec):
     return map(lambda x: -(best_w[1][i] - best_w[1][j])/(best_w[2][i] - best_w[2][j]) *x -(best_w[0][i] - best_w[0][j])/(best_w[2][i]-best_w[2][j]), vec)
 
-r = calc_line(0,1,x)
+h=.02
+x_min, x_max = inputs[:, 0].min() - .5, inputs[:, 0].max() + .5
+y_min, y_max = inputs[:, 1].min() - .5, inputs[:, 1].max() + .5
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+mat_snd = (np.c_[xx.ravel(), yy.ravel()])
+phi_mat_snd = make_phi(mat_snd,basis_fns)
+best_y_snd = make_y(best_w, phi_mat_snd, softmax)
+Z = np.argmax(best_y_snd,axis = 0)+1
+print Z
+# Put the result into a color plot
+Z = Z.reshape(xx.shape)
+plt.figure(1, figsize=(4, 3))
+plt.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
+
+# Plot also the training points
+plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=pl.cm.Paired)
+plt.xlabel('Sepal length')
+plt.ylabel('Sepal width')
+
+plt.xlim(xx.min(), xx.max())
+plt.ylim(yy.min(), yy.max())
+plt.xticks(())
+plt.yticks(())
+
+plt.show()
+
+'''r = calc_line(0,1,x)
 s = calc_line(1,2,x)
 t = calc_line(2,0,x)
 
@@ -147,7 +173,35 @@ plt_colors = ['#990000','#ff6600','#ccff33']
 for i in range(len_data):
     plt.scatter(inputs[i][0],inputs[i][1],c = plt_colors[out_int[i]-1],label = fruit_labels[out_int[i]-1])
 
+
+
 plt.title('Logistic Regression')
 plt.xlabel('Width (cm)')
 plt.ylabel('Hieght (cm)')
 plt.savefig('logistic_reg.png')
+'''
+
+
+# Plot the decision boundary. For that, we will assign a color to each
+# point in the mesh [x_min, m_max]x[y_min, y_max].
+x_min, x_max = inputs[:, 0].min() - .5, inputs[:, 0].max() + .5
+y_min, y_max = inputs[:, 1].min() - .5, inputs[:, 1].max() + .5
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()])
+
+# Put the result into a color plot
+Z = Z.reshape(xx.shape)
+pl.figure(1, figsize=(4, 3))
+pl.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
+
+# Plot also the training points
+pl.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=pl.cm.Paired)
+pl.xlabel('Sepal length')
+pl.ylabel('Sepal width')
+
+pl.xlim(xx.min(), xx.max())
+pl.ylim(yy.min(), yy.max())
+pl.xticks(())
+pl.yticks(())
+
+pl.show()
