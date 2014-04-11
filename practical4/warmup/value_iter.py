@@ -21,7 +21,7 @@ box_arr = [[0,0,0,0,0,0],[0,7,12,1,14,0],[0,2,13,8,11,0],[0,16,3,10,5,0],[0,9,6,
 
 old_policy = np.ones(num_states)
 
-iteration = 0
+#iteration = 0
 
 def list_equality (l1, l2):
     equal = True
@@ -46,17 +46,17 @@ while(not(list_equality (policy_arr, old_policy))):
     for s in range(num_states):        
         policy_arr[s] = argmax (q_fn[s])
         value_arr[s] = max(q_fn[s])
-    iteration +=1
-    print iteration
+#    iteration +=1
+#    print iteration
             
 print value_arr
 print policy_arr
-print old_policy
+#print old_policy
 
-print box_arr[1][3]
 x = np.arange(101)
 
 fig, ax = plt.subplots()
 ax.bar(x, value_arr[:101], 0.5, color='white')
+
 
 plt.show()
