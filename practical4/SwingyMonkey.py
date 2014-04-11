@@ -97,7 +97,7 @@ class SwingyMonkey:
             if tree['x']+290 > self.monkey_left:
                 next_tree = tree.copy()
                 break
-
+        
         # Construct the state dictionary to return.
         return { 'score': self.score,
                  'tree': { 'dist': next_tree['x']+215-self.monkey_right,
