@@ -20,11 +20,14 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel = 2*impulse
-min_m_vel = impulse / 2
-min_tree_dist = -100 # assumes cannot be less than -200 from tree
-mint_tree_top = 350
-max_tree_top = 200
+max_m_vel     = 2*impulse
+min_m_vel     = impulse / 2
+min_tree_dist = -100
+min_tree_top  = 350
+max_tree_top  = 200
+
+def get_coord(state):
+    (0,0,0,0)
 
 class Learner:
 
@@ -47,22 +50,13 @@ class Learner:
 
         # You'll need to take an action, too, and return it.
         # Return 0 to swing and 1 to jump.
-        
-        if (state['tree']['dist']<= min_tree_dist):
-            tree_dist = 0
-        else:
-            #assumes the distace to the tree is at most the distance of the screen. Computes the bin to put the distance in
-            tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
-        
-        if (state['tree']['top'] <= 
-tree_top = state['tree']['top'] * tree_top_bins/
-        if(state['monkey']['vel'] >= max_m_vel):
-            m_vel = m_vel_bins
-        m_vel = state['monkey']['vel'] * m_vel_bins / 
 
-
-
-        new_action = npr.rand() < 0.1
+        coords = get_coord(self.get_state())
+        reward0 = self.q_fn[coords[0],coords[1],coords[2],coords[3],0]
+        reward1 = self.q_fn[coords[0],coords[1],coords[2],coords[3],1]
+        new_action = 0
+        if reward1 > reward0:
+            new_action = 1
         new_state  = state
 
         self.last_action = new_action
@@ -71,7 +65,7 @@ tree_top = state['tree']['top'] * tree_top_bins/
         return self.last_action
 
     def reward_callback(self, reward):
-        '''This gets called so you can see what reward you get.'''        
+        '''This gets called so you can see what reward you get.'''
         self.last_reward = reward
   
 iters = 100
