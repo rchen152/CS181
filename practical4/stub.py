@@ -3,12 +3,30 @@ import sys
 
 from SwingyMonkey import SwingyMonkey
 
+tree_dist_bins = 10
+tree_bot_bins = 10
+m_vel_bins = 10
+m_bot_bins = 10
+
+screen_width  = 600
+screen_height = 400
+horz_speed    = 25
+impulse       = 15
+gravity       = 3
+tree_mean     = 5
+tree_gap      = 200
+tree_offset   = -300
+edge_penalty  = -10.0
+tree_penalty  = -5.0
+tree_reward   = 1.0
+
 class Learner:
 
     def __init__(self):
         self.last_state  = None
         self.last_action = None
         self.last_reward = None
+        self.q_fn = np.zeros((tree_dist_bins,tree_bot_bins,m_vel_bins, m_bot_bins))
 
     def reset(self):
         self.last_state  = None
@@ -24,6 +42,9 @@ class Learner:
         # You'll need to take an action, too, and return it.
         # Return 0 to swing and 1 to jump.
 
+        
+
+
         new_action = npr.rand() < 0.1
         new_state  = state
 
@@ -33,10 +54,9 @@ class Learner:
         return self.last_action
 
     def reward_callback(self, reward):
-        '''This gets called so you can see what reward you get.'''
-
+        '''This gets called so you can see what reward you get.'''        
         self.last_reward = reward
-
+  
 iters = 100
 learner = Learner()
 
