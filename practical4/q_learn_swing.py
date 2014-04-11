@@ -23,7 +23,7 @@ tree_reward   = 1.0
 max_m_vel = 2*impulse
 min_m_vel = impulse / 2
 min_tree_dist = -100 # assumes cannot be less than -200 from tree
-mint_tree_top = 350
+min_tree_top = 350
 max_tree_top = 200
 
 class Learner:
@@ -39,6 +39,34 @@ class Learner:
         self.last_action = None
         self.last_reward = None
 
+    def get_coord(state):
+        if (state['tree']['dist']<= min_tree_dist):
+            tree_dist = 0
+        else:
+
+#assumes the distace to the tree is at most the distance of the screen. Computes the bin to put the distance in
+
+            tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
+        
+        if (state['tree']['top'] <= min_tree_top):
+            tree_top = 0
+        elif (state['tree']['top'] >= max_tree_top):
+            tree_top = tree_top_bins - 1
+        else:
+            tree_top = (state['tree']['top']-min_tree_top) * tree_top_bins/(max_tree_top - min_tree_top)
+
+
+        if(state['monkey']['vel'] <= min_m_vel):
+            m_vel = 0
+        elif(state['monkey']['vel'] >= max_m_vel):
+            m_vel = m_vel_bins - 1            
+        else:
+            m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
+
+        m_top = state['monkey']['top'] * m_top_bins / screen_height
+        
+        return (tree_dist,tree_top,m_vel,m_top)
+
     def action_callback(self, state):
         '''Implement this function to learn things and take actions.
         Return 0 if you don't want to jump and 1 if you do.'''
@@ -48,17 +76,7 @@ class Learner:
         # You'll need to take an action, too, and return it.
         # Return 0 to swing and 1 to jump.
         
-        if (state['tree']['dist']<= min_tree_dist):
-            tree_dist = 0
-        else:
-            #assumes the distace to the tree is at most the distance of the screen. Computes the bin to put the distance in
-            tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
         
-        if (state['tree']['top'] <= 
-tree_top = state['tree']['top'] * tree_top_bins/
-        if(state['monkey']['vel'] >= max_m_vel):
-            m_vel = m_vel_bins
-        m_vel = state['monkey']['vel'] * m_vel_bins / 
 
 
 
