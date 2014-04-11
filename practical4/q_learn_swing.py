@@ -84,6 +84,14 @@ class Learner:
         if reward1 > reward0:
             new_action = 1
         new_state  = state
+        
+        old_coords = get_coord(self.last_state)
+        old_action = self.last_action
+        old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],action]
+        
+        curr_coords = get_coord(state)
+        curr_q_val = max(self.q_fn[coords[0],coords[1],coords[2],coords[3],0], self.q_fn[coords[0],coords[1],coords[2],coords[3],0])
+        self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],action] = old_q_val + ALPHA * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
         self.last_action = new_action
         self.last_state  = new_state
@@ -92,14 +100,6 @@ class Learner:
 
     def reward_callback(self, reward):
         '''This gets called so you can see what reward you get.'''
-        
-        old_coords = get_coord(self.last_state)
-        old_action = self.last_action
-        old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],action]
-        
-        curr_coords = get_coord('''CURRENT STATE???''')
-        curr_q_val = max(self.q_fn[coords[0],coords[1],coords[2],coords[3],0], self.q_fn[coords[0],coords[1],coords[2],coords[3],0])
-        self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],action] = old_q_val + ALPHA * ((reward + (GAMMA * curr_q_val)) - old_q_val)
         
         self.last_reward = reward
   
