@@ -53,8 +53,10 @@ print value_arr
 print policy_arr
 #print old_policy
 
-#print box_arr[1][3]
-x = np.arange(100)
-plt.plot(x,value_arr[:100])
-plt.show()
+x = np.arange(101)
 
+fig, ax = plt.subplots()
+ax.bar(x, value_arr[:101], 0.5, color='white')
+
+
+plt.show()
