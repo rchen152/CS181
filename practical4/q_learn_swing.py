@@ -1,5 +1,6 @@
 import numpy.random as npr
 import sys
+import numpy.random as npr
 
 from SwingyMonkey import SwingyMonkey
 
@@ -28,6 +29,10 @@ min_m_vel     = impulse / 2
 min_tree_dist = -100
 min_tree_top  = 350
 max_tree_top  = 200
+
+epsilon0      = 1
+
+time_step = 0
 
 class Learner:
 
@@ -81,8 +86,11 @@ class Learner:
         reward0 = self.q_fn[coords[0],coords[1],coords[2],coords[3],0]
         reward1 = self.q_fn[coords[0],coords[1],coords[2],coords[3],1]
         new_action = 0
-        if reward1 > reward0:
+        time_step += 1
+        rand_num = npr.rand()
+        if ((reward1 > reward0) and (rand_num > epsilon0/time_step)) or ((reward1 < reward 0) and (rand_num < epsilon0/time_step)):
             new_action = 1
+    
         new_state  = state
         
         old_coords = get_coord(self.last_state)
