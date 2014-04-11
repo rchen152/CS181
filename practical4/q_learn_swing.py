@@ -98,7 +98,7 @@ class Learner:
         old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],action]
         
         curr_coords = get_coord(state)
-        curr_q_val = max(self.q_fn[coords[0],coords[1],coords[2],coords[3],0], self.q_fn[coords[0],coords[1],coords[2],coords[3],0])
+        curr_q_val = max(reward0, reward1)
         self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],action] = old_q_val + ALPHA * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
         self.last_action = new_action
