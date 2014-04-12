@@ -69,7 +69,10 @@ class Learner:
         else:
             m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
 
-        m_top = state['monkey']['top'] * m_top_bins / screen_height
+        if(state['monkey']['top']=screen_height):
+            m_top = m_top_bins - 1
+        else:
+            m_top = state['monkey']['top'] * m_top_bins / screen_height
         
         return (tree_dist,tree_top,m_vel,m_top)
 
