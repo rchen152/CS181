@@ -4,14 +4,11 @@ import sys
 
 from SwingyMonkey import SwingyMonkey
 
-tree_dist_bins = 10
-tree_top_bins = 10
-m_vel_bins = 10
+tree_dist_bins = 20
+tree_top_bins = 6
+m_vel_bins = 5
 m_top_bins = 10
 num_act = 2
-
-ALPHA = 0.5
-GAMMA = 0.99
 
 screen_width  = 600
 screen_height = 400
@@ -30,7 +27,10 @@ min_tree_dist = -100
 min_tree_top  = 350
 max_tree_top  = 200
 
-epsilon0      = 1
+GAMMA         = 0.9
+
+EPSILON0      = 0
+ALPHA0        = 1
 
 def get_coord(state):
     if (state['tree']['dist']<= min_tree_dist):
@@ -68,6 +68,7 @@ class Learner:
         self.last_reward = None
         self.q_fn = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
         self.time_step   = 1
+        self.counter = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
 
     def reset(self):
         self.last_state  = None
@@ -89,24 +90,22 @@ class Learner:
         new_action = 0
         self.time_step += 1
         rand_num = npr.rand()
-        if ((reward1 > reward0) and (rand_num > epsilon0/self.time_step)) or ((reward1 < reward0) and (rand_num < epsilon0/self.time_step)):
+        if ((reward1 > reward0) and (rand_num > EPSILON0/self.time_step)) or ((reward1 < reward0) and (rand_num < EPSILON0/self.time_step)):
             new_action = 1
-    
-        new_state  = state
+            
         
+    
         if not self.last_state == None:
             old_coords = get_coord(self.last_state)
             old_action = self.last_action
             old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action]
-            
-            curr_coords = get_coord(state)
+            self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] += 1
+    
             curr_q_val = max(reward0, reward1)
-            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
-            if old_coords[3] >= 8:
-                print old_coords[3]
+            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
         self.last_action = new_action
-        self.last_state  = new_state
+        self.last_state  = state
 
         return self.last_action
 
