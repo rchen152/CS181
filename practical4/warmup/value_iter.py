@@ -50,6 +50,7 @@ while(not(list_equality (policy_arr, old_policy))):
     print iteration
             
 print value_arr
+print argmax(value_arr[0:100])
 print policy_arr
 print old_policy
 

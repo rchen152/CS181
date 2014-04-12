@@ -1,4 +1,4 @@
-import numpy.random as npr
+cdimport numpy.random as npr
 import sys
 
 from SwingyMonkey import SwingyMonkey
