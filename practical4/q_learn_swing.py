@@ -11,7 +11,7 @@ m_top_bins = 10
 num_act = 2
 
 ALPHA = 0.5
-GAMMA = 0.5
+GAMMA = 0.75
 
 screen_width  = 600
 screen_height = 400
