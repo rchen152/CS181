@@ -1,13 +1,14 @@
 import numpy as np
 import numpy.random as npr
 import sys
-
+import matplotlib.pyplot as plt
 from SwingyMonkey import SwingyMonkey
 
 tree_dist_bins = 5
 tree_top_bins = 5
 m_vel_bins = 5
 m_top_bins = 5
+
 num_act = 2
 
 screen_width  = 600
@@ -21,16 +22,23 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel     = impulse *2
-min_m_vel     = impulse /3
+max_m_vel     = 20
+min_m_vel     = 2
 min_tree_dist = -100
-min_tree_top  = 350
-max_tree_top  = 200
+min_tree_top  = 200
+max_tree_top  = 350
+max_m_top      = 250
+min_m_top      = 50
 
-GAMMA         = .9
+GAMMA         = 1
 
 EPSILON0      = float(0)
-ALPHA0        = 1
+ALPHA0        = .1
+
+score_vec = []
+rolling_avg_param = 20
+
+
 
 def get_coord(state):
     if (state['tree']['dist']<= min_tree_dist):
@@ -38,7 +46,7 @@ def get_coord(state):
     else:
 #assumes the distace to the tree is at most the distance of the screen. Computes the bin to put the distance in
         tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
-      
+
     if (state['tree']['top'] <= min_tree_top):
         tree_top = 0
     elif (state['tree']['top'] >= max_tree_top):
@@ -54,10 +62,13 @@ def get_coord(state):
     else:
         m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
 
-    m_top = state['monkey']['top'] * m_top_bins / screen_height
-    if m_top >= m_top_bins:
+    if state['monkey']['top'] >= max_m_top:
         m_top = m_top_bins - 1
-        
+    elif state['monkey']['top'] <= min_m_top:
+        m_top = 0
+    else:
+        m_top = (state['monkey']['top']-min_m_top) * m_top_bins / (max_m_top-min_m_top)
+
     return (tree_dist,tree_top,m_vel,m_top)
 
 class Learner:
@@ -81,7 +92,7 @@ class Learner:
         print self.score
         self.avg_score = (self.avg_score*self.epoch + self.score)/(self.epoch+float(1))
         print self.avg_score
-        
+        score_vec.append(self.score)
         self.score = 0
 #        self.time_step   = 1
 
@@ -104,9 +115,7 @@ class Learner:
 #        if ((reward1 > reward0) and (rand_num > EPSILON0/self.time_step)) or ((reward1 < reward0) and (rand_num < EPSILON0/self.time_step)):
         if (reward1 > reward0):
             new_action = 1
-            
-        
-    
+                
         if not self.last_state == None:
             old_coords = get_coord(self.last_state)
             old_action = self.last_action
@@ -114,7 +123,8 @@ class Learner:
             self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] += 1
     
             curr_q_val = max(reward0, reward1)
-            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.epoch /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0 /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+#            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.epoch /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
 #        print self.q_fn[coords[0],coords[1],coords[2],coords[3],new_action]
         self.last_action = new_action
@@ -135,7 +145,7 @@ for ii in xrange(iters):
     # Make a new monkey object.
     swing = SwingyMonkey(sound=False,            # Don't play sounds.
                          text="Epoch %d" % (ii), # Display the epoch on screen.
-                         tick_length=10,          # Make game ticks super fast.
+                         tick_length=1,          # Make game ticks super fast.
                          action_callback=learner.action_callback,
                          reward_callback=learner.reward_callback)
 
@@ -146,6 +156,15 @@ for ii in xrange(iters):
     # Reset the state of the learner.
     learner.reset()
 
+x = np.arange(len(score_vec))
 
+#fig, ax = plt.subplots()
+#ax.bar(x, score_vec, 0.5, color='white')
+
+rolling_num = 20
+avg_score_vec = [sum(score_vec[i-rolling_num:i])/float(rolling_num) for i in x]
+fig, ax = plt.subplots()
+ax.bar(x, avg_score_vec, 0.5, color='white')
+plt.show()
 
     
