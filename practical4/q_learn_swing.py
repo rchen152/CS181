@@ -22,20 +22,20 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel     = 15
-min_m_vel     = 0
-min_tree_dist = -100
-min_tree_top  = 200
-max_tree_top  = 350
-max_m_top      = 250
-min_m_top      = 50
+max_m_vel     = 15.
+min_m_vel     = 0.
+min_tree_dist = -100.
+min_tree_top  = 200.
+max_tree_top  = 350.
+max_m_top      = 250.
+min_m_top      = 50.
 
-GAMMA         = 1
+GAMMA         = 1.
 
 
 EPSILON0      = float(1)
 
-ALPHA0        = 1
+ALPHA0        = 1.
 
 score_vec = []
 rolling_avg_param = 20
