@@ -22,8 +22,8 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel     = 20
-min_m_vel     = 2
+max_m_vel     = 15
+min_m_vel     = 0
 min_tree_dist = -100
 min_tree_top  = 200
 max_tree_top  = 350
@@ -32,8 +32,8 @@ min_m_top      = 50
 
 GAMMA         = 1
 
-EPSILON0      = float(0)
-ALPHA0        = .1
+EPSILON0      = float(1)
+ALPHA0        = 1
 
 score_vec = []
 rolling_avg_param = 20
@@ -123,8 +123,8 @@ class Learner:
             self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] += 1
     
             curr_q_val = max(reward0, reward1)
-            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0 /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
-#            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.epoch /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+#            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0 /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.epoch * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
 #        print self.q_fn[coords[0],coords[1],coords[2],coords[3],new_action]
         self.last_action = new_action
