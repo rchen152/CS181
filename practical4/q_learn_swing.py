@@ -32,7 +32,9 @@ min_m_top      = 50
 
 GAMMA         = 1
 
+
 EPSILON0      = float(1)
+
 ALPHA0        = 1
 
 score_vec = []
@@ -89,12 +91,35 @@ class Learner:
         self.last_action = None
         self.last_reward = None
         self.epoch +=1
-        print self.score
+        #print self.score
         self.avg_score = (self.avg_score*self.epoch + self.score)/(self.epoch+float(1))
-        print self.avg_score
+        #print self.avg_score
         score_vec.append(self.score)
         self.score = 0
 #        self.time_step   = 1
+
+        if self.epoch > 100:
+            td_inds = np.zeros(tree_dist_bins)
+            tt_inds = np.zeros(tree_top_bins)
+            mv_inds = np.zeros(m_vel_bins)
+            mt_inds = np.zeros(m_top_bins)
+            na_inds = np.zeros(num_act)
+            for a in range(tree_dist_bins):
+                for b in range(tree_top_bins):
+                    for c in range(m_vel_bins):
+                        for d in range(m_top_bins):
+                            for e in range(num_act):
+                                if not self.counter[a,b,c,d,e] == 0:
+                                    td_inds[a] += 1
+                                    tt_inds[b] += 1
+                                    mv_inds[c] += 1
+                                    mt_inds[d] += 1
+                                    na_inds[e] += 1
+            print td_inds
+            print tt_inds
+            print mv_inds
+            print mt_inds
+            print na_inds
 
     def action_callback(self, state):
         self.score = state['score']
@@ -166,5 +191,3 @@ avg_score_vec = [sum(score_vec[i-rolling_num:i])/float(rolling_num) for i in x]
 fig, ax = plt.subplots()
 ax.bar(x, avg_score_vec, 0.5, color='white')
 plt.show()
-
-    
