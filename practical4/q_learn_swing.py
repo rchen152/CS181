@@ -4,12 +4,12 @@ import sys
 
 from SwingyMonkey import SwingyMonkey
 
-tree_dist_bins = 10
-tree_top_bins = 10
-m_vel_bins = 10
-m_top_bins = 10
-num_act = 2
+tree_dist_bins = 5
+tree_top_bins = 5
+m_vel_bins = 5
+m_top_bins = 5
 
+NUM_ACT = 2
 ALPHA = 0.5
 GAMMA = 0.75
 
@@ -24,13 +24,16 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel     = 2*impulse
-min_m_vel     = impulse / 2
+max_m_vel     = 20
+min_m_vel     = 2
 min_tree_dist = -100
-min_tree_top  = 350
-max_tree_top  = 200
+min_tree_top  = 200
+max_tree_top  = 350
 
-epsilon0      = 1
+GAMMA         = 1.
+
+#EPSILON0      = float(0)
+ALPHA0        = 1.
 
 def get_coord(state):
     if (state['tree']['dist']<= min_tree_dist):
@@ -54,7 +57,7 @@ def get_coord(state):
     else:
         m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
 
-    m_top = state['monkey']['top'] * m_top_bins / screen_height
+    m_top = state['monkey']['top'] * m_top_bins / 200
     if m_top >= m_top_bins:
         m_top = m_top_bins - 1
         
@@ -66,15 +69,50 @@ class Learner:
         self.last_state  = None
         self.last_action = None
         self.last_reward = None
-        self.q_fn = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
+        self.q_fn = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,NUM_ACT))
         self.time_step   = 1
+        self.counter = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,NUM_ACT))
+        self.epoch = float (1)
+        self.score = 0
+        self.avg_score = float(0)
 
     def reset(self):
         self.last_state  = None
         self.last_action = None
         self.last_reward = None
+        self.epoch +=1
+        #print self.score
+        self.avg_score = (self.avg_score*self.epoch + self.score)/(self.epoch+float(1))
+        #print self.avg_score
+
+        if self.epoch > 100:
+            td_inds = np.zeros(tree_dist_bins)
+            tt_inds = np.zeros(tree_top_bins)
+            mv_inds = np.zeros(m_vel_bins)
+            mt_inds = np.zeros(m_top_bins)
+            na_inds = np.zeros(NUM_ACT)
+            for a in range(tree_dist_bins):
+                for b in range(tree_top_bins):
+                    for c in range(m_vel_bins):
+                        for d in range(m_top_bins):
+                            for e in range(NUM_ACT):
+                                if not self.counter[a,b,c,d,e] == 0:
+                                    td_inds[a] += 1
+                                    tt_inds[b] += 1
+                                    mv_inds[c] += 1
+                                    mt_inds[d] += 1
+                                    na_inds[e] += 1
+            print td_inds
+            print tt_inds
+            print mv_inds
+            print mt_inds
+            print na_inds
+        
+        self.score = 0
+#        self.time_step   = 1
 
     def action_callback(self, state):
+        self.score = state['score']
         '''Implement this function to learn things and take actions.
         Return 0 if you don't want to jump and 1 if you do.'''
 
@@ -89,17 +127,20 @@ class Learner:
         new_action = 0
         self.time_step += 1
         rand_num = npr.rand()
-        if ((reward1 > reward0) and (rand_num > float(epsilon0)/self.time_step)) or ((reward1 < reward0) and (rand_num < float(epsilon0)/self.time_step)):
+#        if ((reward1 > reward0) and (rand_num > EPSILON0/self.time_step)) or ((reward1 < reward0) and (rand_num < EPSILON0/self.time_step)):
+        if (reward1 > reward0):
             new_action = 1
-        
         if not self.last_state == None:
             old_coords = get_coord(self.last_state)
             old_action = self.last_action
             old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action]
-            
-            curr_q_val = max(reward0, reward1)
-            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
+            self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] += 1
+    
+            curr_q_val = max(reward0, reward1)
+            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.epoch /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+
+#        print self.q_fn[coords[0],coords[1],coords[2],coords[3],new_action]
         self.last_action = new_action
         self.last_state  = state
 
@@ -107,6 +148,7 @@ class Learner:
 
     def reward_callback(self, reward):
         '''This gets called so you can see what reward you get.'''
+
         self.last_reward = reward
   
 iters = 100
@@ -117,7 +159,7 @@ for ii in xrange(iters):
     # Make a new monkey object.
     swing = SwingyMonkey(sound=False,            # Don't play sounds.
                          text="Epoch %d" % (ii), # Display the epoch on screen.
-                         tick_length=10,          # Make game ticks super fast.
+                         tick_length=1,          # Make game ticks super fast.
                          action_callback=learner.action_callback,
                          reward_callback=learner.reward_callback)
 
