@@ -55,6 +55,8 @@ def get_coord(state):
         m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
 
     m_top = state['monkey']['top'] * m_top_bins / screen_height
+    if m_top >= m_top_bins:
+        m_top = m_top_bins - 1
         
     return (tree_dist,tree_top,m_vel,m_top)
 
@@ -72,35 +74,6 @@ class Learner:
         self.last_action = None
         self.last_reward = None
 
-    def get_coord(state):
-        if (state['tree']['dist']<= min_tree_dist):
-            tree_dist = 0
-        else:
-#assumes the distace to the tree is at most the distance of the screen. Computes the bin to put the distance in
-            tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
-        
-        if (state['tree']['top'] <= min_tree_top):
-            tree_top = 0
-        elif (state['tree']['top'] >= max_tree_top):
-            tree_top = tree_top_bins - 1
-        else:
-            tree_top = (state['tree']['top']-min_tree_top) * tree_top_bins/(max_tree_top - min_tree_top)
-
-
-        if(state['monkey']['vel'] <= min_m_vel):
-            m_vel = 0
-        elif(state['monkey']['vel'] >= max_m_vel):
-            m_vel = m_vel_bins - 1            
-        else:
-            m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
-
-        if(state['monkey']['top']=screen_height):
-            m_top = m_top_bins - 1
-        else:
-            m_top = state['monkey']['top'] * m_top_bins / screen_height
-        
-        return (tree_dist,tree_top,m_vel,m_top)
-
     def action_callback(self, state):
         '''Implement this function to learn things and take actions.
         Return 0 if you don't want to jump and 1 if you do.'''
@@ -116,28 +89,24 @@ class Learner:
         new_action = 0
         self.time_step += 1
         rand_num = npr.rand()
-        if ((reward1 > reward0) and (rand_num > epsilon0/self.time_step)) or ((reward1 < reward0) and (rand_num < epsilon0/self.time_step)):
+        if ((reward1 > reward0) and (rand_num > float(epsilon0)/self.time_step)) or ((reward1 < reward0) and (rand_num < float(epsilon0)/self.time_step)):
             new_action = 1
-    
-        new_state  = state
         
         if not self.last_state == None:
             old_coords = get_coord(self.last_state)
             old_action = self.last_action
             old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action]
             
-            curr_coords = get_coord(state)
             curr_q_val = max(reward0, reward1)
             self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
         self.last_action = new_action
-        self.last_state  = new_state
+        self.last_state  = state
 
         return self.last_action
 
     def reward_callback(self, reward):
         '''This gets called so you can see what reward you get.'''
-        
         self.last_reward = reward
   
 iters = 100
