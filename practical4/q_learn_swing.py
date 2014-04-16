@@ -4,10 +4,10 @@ import sys
 
 from SwingyMonkey import SwingyMonkey
 
-tree_dist_bins = 20
-tree_top_bins = 6
+tree_dist_bins = 5
+tree_top_bins = 5
 m_vel_bins = 5
-m_top_bins = 10
+m_top_bins = 5
 num_act = 2
 
 screen_width  = 600
@@ -21,15 +21,15 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel     = 2*impulse
-min_m_vel     = impulse / 2
+max_m_vel     = impulse *5
+min_m_vel     = impulse /3
 min_tree_dist = -100
 min_tree_top  = 350
 max_tree_top  = 200
 
-GAMMA         = 0.9
+GAMMA         = .9
 
-EPSILON0      = 0
+EPSILON0      = float(0)
 ALPHA0        = 1
 
 def get_coord(state):
@@ -69,13 +69,24 @@ class Learner:
         self.q_fn = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
         self.time_step   = 1
         self.counter = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
+        self.epoch = float (1)
+        self.score = 0
+        self.avg_score = float(0)
 
     def reset(self):
         self.last_state  = None
         self.last_action = None
         self.last_reward = None
+        self.epoch +=1
+        print self.score
+        self.avg_score = (self.avg_score*self.epoch + self.score)/(self.epoch+float(1))
+        print self.avg_score
+        
+        self.score = 0
+#        self.time_step   = 1
 
     def action_callback(self, state):
+        self.score = state['score']
         '''Implement this function to learn things and take actions.
         Return 0 if you don't want to jump and 1 if you do.'''
 
@@ -102,9 +113,10 @@ class Learner:
             self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] += 1
     
             curr_q_val = max(reward0, reward1)
-            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.counter
-                [old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
 
+
+#        print self.q_fn[coords[0],coords[1],coords[2],coords[3],new_action]
         self.last_action = new_action
         self.last_state  = state
 
@@ -112,10 +124,10 @@ class Learner:
 
     def reward_callback(self, reward):
         '''This gets called so you can see what reward you get.'''
-        
+
         self.last_reward = reward
   
-iters = 100
+iters = 1000
 learner = Learner()
 
 for ii in xrange(iters):
