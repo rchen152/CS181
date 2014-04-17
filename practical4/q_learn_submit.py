@@ -70,7 +70,7 @@ def get_coord(state):
                  (max_m_top - min_m_top))
 
     # Return a tuple of the bin indices
-    return (tree_dist,tree_top,m_vel,m_top)
+    return (int(tree_dist), int(tree_top), int(m_vel), int(m_top))
 
 class Learner:
     def __init__(self):
@@ -80,11 +80,11 @@ class Learner:
         self.q_fn = np.zeros((tree_dist_bins, tree_top_bins, m_vel_bins,
                               m_top_bins, num_act))
         self.time_step   = 1
-        self.counter = np.zeros((tree_dist_bins,tree_top_bins, m_vel_bins,
-                                 m_top_bins, num_act))
-        self.epoch = float (1)
-        self.score = 0
-        self.avg_score = float(0)
+        self.counter     = np.zeros((tree_dist_bins,tree_top_bins, m_vel_bins,
+                                     m_top_bins, num_act))
+        self.epoch       = float(1)
+        self.score       = 0
+        self.avg_score   = float(0)
     def reset(self):
         self.last_state  = None
         self.last_action = None
@@ -92,8 +92,8 @@ class Learner:
         self.epoch +=1
 
         # Keep track of the score
-        self.avg_score = ((self.avg_score * self.epoch + self.score) /
-                          (self.epoch + float(1)))
+        self.avg_score   = ((self.avg_score * self.epoch + self.score) /
+                            (self.epoch + float(1)))
         score_vec.append(self.score)
 
         # Display the score
@@ -136,7 +136,7 @@ class Learner:
         reward1 = self.q_fn[coords[0],coords[1],coords[2],coords[3],1]
         new_action = 0
         self.time_step += 1
-        if (reward1 > reward0):
+        if reward1 > reward0:
             new_action = 1
                 
         # Update the q function
