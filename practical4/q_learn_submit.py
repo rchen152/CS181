@@ -15,13 +15,13 @@ screen_width  = 600.
 screen_height = 400.
 impulse       = 15.
 
-max_m_vel     = impulse
 min_m_vel     = 0.
+max_m_vel     = impulse
 min_tree_dist = -100.
 min_tree_top  = 200.
 max_tree_top  = screen_height - 50.
-max_m_top     = 250
 min_m_top     = 50.
+max_m_top     = 250
 
 GAMMA         = 1.
 ALPHA0        = 1.
@@ -29,34 +29,35 @@ ALPHA0        = 1.
 # We decided to not use epsilon
 #EPSILON0      = float(1)
 
+iters = 100
 score_vec = []
 rolling_avg_param = 20
 
 # Compute the bin to put the state in
 def get_coord(state):
     # Get the bin for the distance from the monkey to the tree
-    if (state['tree']['dist'] <= min_tree_dist):
+    if state['tree']['dist'] <= min_tree_dist:
         tree_dist = 0.
     else:
         tree_dist = ((state['tree']['dist'] + min_tree_dist) *
                      tree_dist_bins / (min_tree_dist + screen_width))
 
     # Get the bin for the tree gap height
-    if (state['tree']['top'] <= min_tree_top):
+    if state['tree']['top'] <= min_tree_top:
         tree_top = 0.
-    elif (state['tree']['top'] >= max_tree_top):
-        tree_top = tree_top_bins - 1,
+    elif state['tree']['top'] >= max_tree_top:
+        tree_top = tree_top_bins - 1.
     else:
         tree_top = ((state['tree']['top'] - min_tree_top) *
                     tree_top_bins / (max_tree_top - min_tree_top))
 
     # Get the bin for the monkey velocity
-    if(state['monkey']['vel'] <= min_m_vel):
+    if state['monkey']['vel'] <= min_m_vel:
         m_vel = 0.
-    elif(state['monkey']['vel'] >= max_m_vel):
+    elif state['monkey']['vel'] >= max_m_vel:
         m_vel = m_vel_bins - 1.          
     else:
-        m_vel = ((state['monkey']['vel']-min_m_vel) * m_vel_bins /
+        m_vel = ((state['monkey']['vel'] - min_m_vel) * m_vel_bins /
                  (max_m_vel - min_m_vel))
 
     # Get the bin for the monkey height
@@ -100,8 +101,8 @@ class Learner:
         print self.avg_score
         self.score = 0
 
-        # After 100 trials, print out the bin distribution
-        if self.epoch > 100:
+        # Print out the bin distribution at the end
+        if self.epoch > iters:
             td_inds = np.zeros(tree_dist_bins)
             tt_inds = np.zeros(tree_top_bins)
             mv_inds = np.zeros(m_vel_bins)
@@ -160,7 +161,6 @@ class Learner:
     def reward_callback(self, reward):
         self.last_reward = reward
   
-iters = 100
 learner = Learner()
 
 for ii in xrange(iters):
