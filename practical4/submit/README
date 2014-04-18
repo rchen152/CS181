@@ -1,0 +1,57 @@
+Summary
+-------
+
+We completed the warm-up and the main task of practical 5 in Python.
+
+Files
+-----
+
+1. policy_iter.py
+2. q_learn.py
+3. SwingyMonkey.py (*)
+4. res/blop.wav (*)
+5. res/jungle-pixel.png (*)
+6. res/monkey.png (*)
+7. res/screech.wv (*)
+8. res/tree-pixel.png (*)
+
+(*) Staff-provided files, unchanged
+
+Required downloads
+------------------
+
+Matplotlib
+NumPy
+Pygame
+
+To determine whether you need to download any of these, type at the terminal
+  python
+  import numpy
+  import matplotlib
+  import pygame
+If Python cannot find any of these, you can install it from your package
+manager.  The Matplotlib package is usually called python-matplotlib.  For
+NumPy, visit http://www.scipy.org/scipylib/download.html and scroll to the
+bottom of the page to find the name of the numpy package for your distribution.
+For Pygame, consult the Unix Distributions section of
+http://www.pygame.org/download.shtml for the name of the pygame package.
+
+To run the warm-up
+------------------
+At the terminal type
+  python policy_iter.py
+The output is
+  (1) a printout of the value function and the optimal policy, and
+  (2) a bar graph of the value function.
+Note that the policy printout gives the array index of the square rather than
+point value.
+
+To run the Swingy Monkey learner
+--------------------------------
+At the terminal type
+  python q_learn.py
+This brings up the Swingy Monkey graphics window and prints the score for each
+epoch and the current average score to the console.  After 100 iterations, the
+output is
+  (1) a printout of the bin distribution, and
+  (2) a bar graph of the rolling average of the score.
