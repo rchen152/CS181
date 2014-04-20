@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 num_states = 100
 num_actions = 16
 
-# Array for recording reward at each score
+# Array for remembering value function
 value_arr = range(num_states+16)
 for i in range(100):
     value_arr[i] = 0
@@ -24,7 +24,7 @@ old_policy = np.ones(num_states)
 # The q function
 q_fn = np.zeros(num_states*num_actions).reshape((num_states,num_actions))
 
-# Finding optimal policy and reward at each score
+# Compute optimal policy and value function
 while not (policy_arr == old_policy).all():
     for i in range(len(old_policy)):
         old_policy[i] = policy_arr[i]
@@ -46,7 +46,7 @@ while not (policy_arr == old_policy).all():
 print value_arr
 print policy_arr
 
-# Plot rewards
+# Plot value function
 x = np.arange(101)
 fig, ax = plt.subplots()
 ax.bar(x, value_arr[:101], 0.5, color='white')

@@ -11,93 +11,97 @@ m_top_bins = 5
 
 num_act = 2
 
-screen_width  = 600
-screen_height = 400
-horz_speed    = 25
-impulse       = 15
-gravity       = 3
-tree_mean     = 5
-tree_gap      = 200
-tree_offset   = -300
-edge_penalty  = -10.0
-tree_penalty  = -5.0
-tree_reward   = 1.0
-max_m_vel     = 15.
+screen_width  = 600.
+screen_height = 400.
+impulse       = 15.
+
 min_m_vel     = 0.
+max_m_vel     = impulse
 min_tree_dist = -100.
 min_tree_top  = 200.
-max_tree_top  = 350.
-max_m_top      = 250.
-min_m_top      = 50.
+max_tree_top  = screen_height - 50.
+min_m_top     = 50.
+max_m_top     = 250
 
 GAMMA         = 1.
-
-
-EPSILON0      = float(1)
-
 ALPHA0        = 1.
 
+# We decided to not use epsilon
+#EPSILON0      = float(1)
+
+iters = 100
 score_vec = []
 rolling_avg_param = 20
 
-iters = 100
-
+# Compute the bin to put the state in
 def get_coord(state):
-    if (state['tree']['dist']<= min_tree_dist):
-        tree_dist = 0
+    # Get the bin for the distance from the monkey to the tree
+    if state['tree']['dist'] <= min_tree_dist:
+        tree_dist = 0.
     else:
-#this line doesn't seem right, but changing it slows the monkey's learning rate
-        tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
+        tree_dist = ((state['tree']['dist'] + min_tree_dist) *
+                     tree_dist_bins / (min_tree_dist + screen_width))
 
-    if (state['tree']['top'] <= min_tree_top):
-        tree_top = 0
-    elif (state['tree']['top'] >= max_tree_top):
-        tree_top = tree_top_bins - 1
+    # Get the bin for the tree gap height
+    if state['tree']['top'] <= min_tree_top:
+        tree_top = 0.
+    elif state['tree']['top'] >= max_tree_top:
+        tree_top = tree_top_bins - 1.
     else:
-        tree_top = (state['tree']['top']-min_tree_top) * tree_top_bins/(max_tree_top - min_tree_top)
+        tree_top = ((state['tree']['top'] - min_tree_top) *
+                    tree_top_bins / (max_tree_top - min_tree_top))
 
-
-    if(state['monkey']['vel'] <= min_m_vel):
-        m_vel = 0
-    elif(state['monkey']['vel'] >= max_m_vel):
-        m_vel = m_vel_bins - 1            
+    # Get the bin for the monkey velocity
+    if state['monkey']['vel'] <= min_m_vel:
+        m_vel = 0.
+    elif state['monkey']['vel'] >= max_m_vel:
+        m_vel = m_vel_bins - 1.          
     else:
-        m_vel = (state['monkey']['vel']-min_m_vel) * m_vel_bins / (max_m_vel - min_m_vel)
+        m_vel = ((state['monkey']['vel'] - min_m_vel) * m_vel_bins /
+                 (max_m_vel - min_m_vel))
 
+    # Get the bin for the monkey height
     if state['monkey']['top'] >= max_m_top:
-        m_top = m_top_bins - 1
+        m_top = m_top_bins - 1.
     elif state['monkey']['top'] <= min_m_top:
-        m_top = 0
+        m_top = 0.
     else:
-        m_top = (state['monkey']['top']-min_m_top) * m_top_bins / (max_m_top-min_m_top)
+        m_top = ((state['monkey']['top']-min_m_top) * m_top_bins /
+                 (max_m_top - min_m_top))
 
-    return (tree_dist,tree_top,m_vel,m_top)
+    # Return a tuple of the bin indices
+    return (int(tree_dist), int(tree_top), int(m_vel), int(m_top))
 
 class Learner:
-
     def __init__(self):
         self.last_state  = None
         self.last_action = None
         self.last_reward = None
-        self.q_fn = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
+        self.q_fn = np.zeros((tree_dist_bins, tree_top_bins, m_vel_bins,
+                              m_top_bins, num_act))
         self.time_step   = 1
-        self.counter = np.zeros((tree_dist_bins,tree_top_bins,m_vel_bins, m_top_bins,num_act))
-        self.epoch = float (1)
-        self.score = 0
-        self.avg_score = float(0)
-
+        self.counter     = np.zeros((tree_dist_bins,tree_top_bins, m_vel_bins,
+                                     m_top_bins, num_act))
+        self.epoch       = float(1)
+        self.score       = 0
+        self.avg_score   = float(0)
     def reset(self):
         self.last_state  = None
         self.last_action = None
         self.last_reward = None
         self.epoch +=1
-        print self.score
-        self.avg_score = (self.avg_score*self.epoch + self.score)/(self.epoch+float(1))
-        print self.avg_score
-        score_vec.append(self.score)
-        self.score = 0
-#        self.time_step   = 1
 
+        # Keep track of the score
+        self.avg_score   = ((self.avg_score * self.epoch + self.score) /
+                            (self.epoch + float(1)))
+        score_vec.append(self.score)
+
+        # Display the score
+        print self.score
+        print self.avg_score
+        self.score = 0
+
+        # Print out the bin distribution at the end
         if self.epoch > iters:
             td_inds = np.zeros(tree_dist_bins)
             tt_inds = np.zeros(tree_top_bins)
@@ -115,6 +119,7 @@ class Learner:
                                     mv_inds[c] += 1
                                     mt_inds[d] += 1
                                     na_inds[e] += 1
+            print "-------BIN DISTRIBUTION--------"
             print td_inds
             print tt_inds
             print mv_inds
@@ -122,44 +127,38 @@ class Learner:
             print na_inds
 
     def action_callback(self, state):
+        # Remember the current score
         self.score = state['score']
-        '''Implement this function to learn things and take actions.
-        Return 0 if you don't want to jump and 1 if you do.'''
 
-        # You might do some learning here based on the current state and the last state.
-
-        # You'll need to take an action, too, and return it.
-        # Return 0 to swing and 1 to jump.
-
+        # Choose the next action
         coords = get_coord(state)
         reward0 = self.q_fn[coords[0],coords[1],coords[2],coords[3],0]
         reward1 = self.q_fn[coords[0],coords[1],coords[2],coords[3],1]
         new_action = 0
         self.time_step += 1
-        rand_num = npr.rand()
-#        if ((reward1 > reward0) and (rand_num > EPSILON0/self.time_step)) or ((reward1 < reward0) and (rand_num < EPSILON0/self.time_step)):
-        if (reward1 > reward0):
+        if reward1 > reward0:
             new_action = 1
                 
+        # Update the q function
         if not self.last_state == None:
             old_coords = get_coord(self.last_state)
             old_action = self.last_action
-            old_q_val = self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action]
-            self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] += 1
-    
+            old_q_val = self.q_fn[old_coords[0], old_coords[1], old_coords[2],
+                                  old_coords[3], old_action]
+            self.counter[old_coords[0], old_coords[1], old_coords[2],
+                         old_coords[3], old_action] += 1    
             curr_q_val = max(reward0, reward1)
-#            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0 /self.counter[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
-            self.q_fn[old_coords[0],old_coords[1],old_coords[2],old_coords[3],old_action] = old_q_val + ALPHA0/self.epoch * ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val)
+            q_update = (old_q_val + ALPHA0 / self.epoch *
+                        ((self.last_reward + (GAMMA * curr_q_val)) - old_q_val))
+            self.q_fn[old_coords[0], old_coords[1], old_coords[2],
+                      old_coords[3], old_action] = q_update
 
-#        print self.q_fn[coords[0],coords[1],coords[2],coords[3],new_action]
         self.last_action = new_action
         self.last_state  = state
 
         return self.last_action
 
     def reward_callback(self, reward):
-        '''This gets called so you can see what reward you get.'''
-
         self.last_reward = reward
   
 learner = Learner()
@@ -180,16 +179,10 @@ for ii in xrange(iters):
     # Reset the state of the learner.
     learner.reset()
 
+# Plot the rolling average of the score
 x = np.arange(len(score_vec))
-
-fig, ax = plt.subplots()
-ax.bar(x, score_vec, 0.5, color='white')
-plt.savefig('per_trial_avg3.png')
-
-plt.cla()
 rolling_num = 20
 avg_score_vec = [sum(score_vec[i-rolling_num:i])/float(rolling_num) for i in x]
 fig, ax = plt.subplots()
 ax.bar(x, avg_score_vec, 0.5, color='white')
-plt.savefig('rolling_avg3.png')
-
+plt.show()
