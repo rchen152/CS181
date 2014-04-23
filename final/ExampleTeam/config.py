@@ -1,5 +1,5 @@
-teamname = 'ExampleTeam'
+teamname = 'Coequalizer'
 
-members = [ ('Gerald Dean Rascoe', 'rascoe@college.harvard.edu'),
-            ('Edward May', 'edward@fas.harvard.edu'),
-            ('Geraldine Rascoe', 'geraldine@seas.harvard.edu')]
+members = [ ('Aaron Landesman', 'aaronlandesman@gmail.com'),
+            ('Spencer Kwon', 'yongwookkwon@college.harvard.edu'),
+            ('Rebecca Chen', 'rchen@college.harvard.edu')]
