@@ -190,11 +190,14 @@ for ii in xrange(iters):
 
 x = np.arange(len(score_vec))
 
-#fig, ax = plt.subplots()
-#ax.bar(x, score_vec, 0.5, color='white')
+fig, ax = plt.subplots()
+ax.bar(x, score_vec, 0.5, color='white')
+plt.savefig('per_trial_avg3.png')
 
+plt.cla()
 rolling_num = 20
 avg_score_vec = [sum(score_vec[i-rolling_num:i])/float(rolling_num) for i in x]
 fig, ax = plt.subplots()
 ax.bar(x, avg_score_vec, 0.5, color='white')
-plt.show()
+plt.savefig('rolling_avg3.png')
+
