@@ -22,31 +22,31 @@ tree_offset   = -300
 edge_penalty  = -10.0
 tree_penalty  = -5.0
 tree_reward   = 1.0
-max_m_vel     = 15
-min_m_vel     = 0
-min_tree_dist = -100
-min_tree_top  = 200
-max_tree_top  = 350
-max_m_top      = 250
-min_m_top      = 50
+max_m_vel     = 15.
+min_m_vel     = 0.
+min_tree_dist = -100.
+min_tree_top  = 200.
+max_tree_top  = 350.
+max_m_top      = 250.
+min_m_top      = 50.
 
-GAMMA         = 1
+GAMMA         = 1.
 
 
 EPSILON0      = float(1)
 
-ALPHA0        = 1
+ALPHA0        = 1.
 
 score_vec = []
 rolling_avg_param = 20
 
-
+iters = 100
 
 def get_coord(state):
     if (state['tree']['dist']<= min_tree_dist):
         tree_dist = 0
     else:
-#assumes the distace to the tree is at most the distance of the screen. Computes the bin to put the distance in
+#this line doesn't seem right, but changing it slows the monkey's learning rate
         tree_dist = (state['tree']['dist']+min_tree_dist)*tree_dist_bins/(min_tree_dist+screen_width) 
 
     if (state['tree']['top'] <= min_tree_top):
@@ -91,14 +91,14 @@ class Learner:
         self.last_action = None
         self.last_reward = None
         self.epoch +=1
-        #print self.score
+        print self.score
         self.avg_score = (self.avg_score*self.epoch + self.score)/(self.epoch+float(1))
-        #print self.avg_score
+        print self.avg_score
         score_vec.append(self.score)
         self.score = 0
 #        self.time_step   = 1
 
-        if self.epoch > 100:
+        if self.epoch > iters:
             td_inds = np.zeros(tree_dist_bins)
             tt_inds = np.zeros(tree_top_bins)
             mv_inds = np.zeros(m_vel_bins)
@@ -166,7 +166,10 @@ class Learner:
 
         self.last_reward = reward
   
+<<<<<<< HEAD
 iters = 1000
+=======
+>>>>>>> 90cc7bb6e02f189229469bef8282274a357a6d94
 learner = Learner()
 
 for ii in xrange(iters):
