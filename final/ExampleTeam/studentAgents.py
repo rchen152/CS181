@@ -3,7 +3,7 @@ from game import Actions
 from game import Directions
 from observedState import ObservedState
 import numpy as np
-
+from util import random, manhattanDistance, Counter, chooseFromDistribution, raiseNotDefined
 
 class BaseStudentAgent(object):
     """Superclass of agents students will write"""
@@ -26,6 +26,13 @@ class BaseStudentAgent(object):
     def chooseAction(self, observedState):
         "By default, a BustersAgent just stops.  This should be overridden."
         return Directions.STOP
+
+class RandomAgent(BaseStudentAgent):
+
+    def chooseAction(self, observedState):
+        pacmanPosition = observedState.getPacmanPosition()
+        legalActs = [a for a in observedState.getLegalPacmanActions()]
+        return random.choice(legalActs )
 
 
 ## Below is the class students need to rename and modify
