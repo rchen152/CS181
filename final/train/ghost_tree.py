@@ -20,9 +20,9 @@ for row in reader:
     test_lst.append(row)
 test_matrix = np.array(test_lst)
 
-cats = train_matrix[:,1]
-mat = sp.delete(train_matrix,1,1)
-test = sp.delete(test_matrix,1,1)
+cats = train_matrix[:1000,1]
+mat = train_matrix[:1000,:3]
+test = test_matrix[:,:3]
 
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
@@ -31,5 +31,8 @@ print preds
 correct_preds = test_matrix[:,1]
 print correct_preds
 lst = [correct_preds[i]==preds[i] for i in range(len(preds))]
+for i in range(6):
+    print len(filter(lambda x: x ==str(float(i)),correct_preds))
 print len(lst)
 print sum(lst)
+pred2 = clf.predict(mat)
