@@ -3,7 +3,10 @@ from game import Actions
 from game import Directions
 from observedState import ObservedState
 import numpy as np
+import csv
 from util import random, manhattanDistance, Counter, chooseFromDistribution, raiseNotDefined
+
+GOOD_CAPS_CSV = 'data/good_caps_train.csv'
 
 class BaseStudentAgent(object):
     """Superclass of agents students will write"""
@@ -27,11 +30,19 @@ class BaseStudentAgent(object):
         "By default, a BustersAgent just stops.  This should be overridden."
         return Directions.STOP
 
-class RandomAgent(BaseStudentAgent):
+class DataAgent(BaseStudentAgent):
 
     def chooseAction(self, observedState):
         pacmanPosition = observedState.getPacmanPosition()
         legalActs = [a for a in observedState.getLegalPacmanActions()]
+        gcaps = observedState.getGoodCapsuleExamples()
+        f = open(GOOD_CAPS_CSV, "w+")
+        f.close()
+        with open(GOOD_CAPS_CSV, 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            for row in gcaps:
+                writer.writerow(row)
         return random.choice(legalActs )
 
 
