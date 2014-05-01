@@ -1,8 +1,11 @@
 from sklearn import tree
 import numpy as np
+import scipy as sp
+import csv
+import pickle
 
-TRAIN_NAME = "../data/train_ghost.csv"
-TEST_NAME = "../data/validate_ghost.csv"
+TRAIN_NAME = "../data/master_valid_ghost.csv"
+TEST_NAME = "../data/master_ghost.csv"
 
 train_matrix = np.loadtxt(TRAIN_NAME)
 test_matrix = np.loadtxt(TEST_NAME)
@@ -15,6 +18,7 @@ test = test_matrix[:,good_feats]
 
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
+
 preds = clf.predict(test)
 correct_preds = test_matrix[:,1]
 
