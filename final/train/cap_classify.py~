@@ -1,0 +1,9 @@
+import cPickle as pickle
+
+fPCA = open('pca', 'wb')
+pca = pickle.load(fPCA)
+fPCA.close()
+
+fKMeans = open('means_centers', 'wb')
+centers = pickle.load(fKMeans)
+fKMeans.close()

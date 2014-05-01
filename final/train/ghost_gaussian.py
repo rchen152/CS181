@@ -1,52 +1,31 @@
-import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as linalg
+from scipy.stats import multivariate_normal as norm
 
-# load data from fruit.csv
-raw_data = np.loadtxt('fruit.csv', dtype=str, delimiter=';')
-reader = csv.reader(raw_data, delimiter=',')
-reader.next()
-fruits = [[],[],[]]
-for row in reader:
-    fruits[int(row[0])-1].append(map(lambda d: float(d), row[1:]))
-fruits = [np.array(fruit) for fruit in fruits]
+# load training data
+data = np.loadtxt(open('../data/train_ghost.csv'), delimiter = ' ')
+good_feats = [3,4,5,6,7,13,14,15]
+ghosts = [data[data[:,1] == i][:,good_feats] for i in [0,1,2,3,5]]
+num_feats = len(good_feats)
 
-# count number and average dimension of each type of fruit
-counts = [len(fruit) for fruit in fruits]
-avgs = [sum(fruits[i][0:])/counts[i] for i in range(len(fruits))]
+# count number and average dimension of each type of ghost
+counts = [len(ghost) for ghost in ghosts]
+avgs = [sum(ghosts[i])/counts[i] for i in range(len(ghosts))]
 
 # function to compute variance matrix
-def var(fr_ind):
-    var_mat = np.zeros((2,2))
-    for i in range(counts[fr_ind]):
-        diff = (fruits[fr_ind][i] - avgs[fr_ind]).reshape((1,2))
+def var(gh_ind):
+    var_mat = np.zeros((num_feats,num_feats))
+    for i in range(counts[gh_ind]):
+        diff = (ghosts[gh_ind][i] - avgs[gh_ind]).reshape((1,num_feats))
         var_mat += diff.transpose().dot(diff)
     return var_mat
 
-# get weighted average of variance matrices
 sigma_inv = linalg.inv(sum([counts[i]*var(i)
-                            for i in range(len(fruits))])/sum(counts))
-
-# plot fruit.csv data
-fruit_labels = ['apples','oranges','lemons']
-plt_colors = ['#990000','#ff6600','#ccff33']
-for i in range(len(fruits)):
-    plt.scatter(fruits[i][:,0], fruits[i][:,1], c=plt_colors[i],
-                label=fruit_labels[i])
-
-# plot decision boundaries
-x = np.arange(5,11,1)
-for i,j in [(0,1),(0,2),(1,2)]:
-    mu1 = avgs[i].reshape((1,2))
-    mu2 = avgs[j].reshape((1,2))
-    diff_left = (mu1.dot(sigma_inv)).dot(mu1.transpose())
-    diff_right = (mu2.dot(sigma_inv)).dot(mu2.transpose())
-    diff = diff_left[0,0] - diff_right[0,0]
-    coeff_mat = 2*(mu1-mu2).dot(sigma_inv)
-    y = (diff - coeff_mat[0,0]*x)/coeff_mat[0,1]
-    plt.plot(x,y, label=fruit_labels[i] + '/' + fruit_labels[j])
-    
-# create legend and show plot
-plt.legend(loc='lower right')
-plt.show()
+                            for i in range(len(ghosts))])/sum(counts))
+test = np.loadtxt(open('../data/validate_ghost.csv'), delimiter = ' ')
+test_feats = test[:,good_feats]
+for i in range(len(test)):
+    for j in range(len(ghosts)):
+        print norm.pdf(test_feats[i], mean=avgs[j], cov=sigma_iv)
+    break
