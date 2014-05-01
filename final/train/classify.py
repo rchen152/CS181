@@ -9,7 +9,7 @@ fKMeans = open('kmeans_centers.pickle', 'r')
 centers = pickle.load(fKMeans)
 fKMeans.close()
 
-fTree = open('pickled_tree.p', 'r')
+fTree = open('tree.pickle', 'r')
 tree = pickle.load(fTree)
 fTree.close()
 
