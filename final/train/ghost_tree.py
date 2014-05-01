@@ -4,20 +4,20 @@ import scipy as sp
 import csv
 import pickle
 
-TRAIN_NAME = "../data/master_ghost.csv"
-TEST_NAME = "../data/master_valid_ghost.csv"
+TRAIN_NAME = "../data/master_valid_ghost.csv"
+TEST_NAME = "../data/master_ghost.csv"
 
 train_matrix = np.loadtxt(TRAIN_NAME)
 test_matrix = np.loadtxt(TEST_NAME)
 
 cats = train_matrix[:,1]
-mat = train_matrix[:,:3]
-test = test_matrix[:,:3]
+mat = train_matrix[:,3:]
+test = test_matrix[:,3:]
 
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
 
-pickle.dump(clf,open("pickled_tree.p","wb"))
+#pickle.dump(clf,open("pickled_tree.p","wb"))
 preds = clf.predict(test)
 print preds
 correct_preds = test_matrix[:,1]
