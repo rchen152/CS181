@@ -15,10 +15,10 @@ def classify(data):
     cats,_ = vq(data,centers)
     return [1 if cat==0 else 0 for cat in cats]
 
-good_data = pca.transform(np.loadtxt(open('../data/good_cap.csv')))
+good_data = pca.transform(np.loadtxt('../data/good_cap.csv'))
 print 'All good capsules:'
 print classify(good_data)
 
-mixed_data = pca.transform(np.loadtxt(open('../data/validate_cap.csv')))
+mixed_data = pca.transform(np.loadtxt('../data/validate_cap.csv'))
 print '\nMix of capsules:'
 print classify(mixed_data)

@@ -4,20 +4,25 @@ import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 import cPickle as pickle
 
-train_data = np.loadtxt(open('../data/train_cap.csv'), delimiter = ' ')
+train_data = np.loadtxt('../data/train_cap.csv')
 pca = PCA(n_components = 2)
 pca.fit(train_data)
 all_data = pca.transform(train_data)
 centers,_ = kmeans(all_data,3)
 
-'''fPCA = open('pca.pickle', 'w')
-pickle.dump(pca, fPCA)
-fPCA.close()
+def pickle():
+    fPCA = open('pca.pickle', 'w')
+    pickle.dump(pca, fPCA)
+    fPCA.close()
 
-fKMeans = open('kmeans_centers.pickle', 'w')
-pickle.dump(centers, fKMeans)
-fKMeans.close()'''
+    fKMeans = open('kmeans_centers.pickle', 'w')
+    pickle.dump(centers, fKMeans)
+    fKMeans.close()
 
+def plot_pca():
+    
+
+def plot_kmeans():
 '''ids,_ = vq(all_data,centers)
 clusters = [[],[],[]]
 for i in range(len(ids)):
