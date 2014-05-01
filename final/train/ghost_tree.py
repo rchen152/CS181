@@ -19,12 +19,16 @@ test = test_matrix[:,good_feats]
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
 
+#pickle.dump(clf,open("pickled_tree_101_200.p","w"))
 preds = clf.predict(test)
 correct_preds = test_matrix[:,1]
 
-correct = 0
-total = len(preds)
-for i in range(total):
-    if preds[i] == correct_preds[i]:
-        correct += 1
-print (correct/total)
+lst = [preds[i] for i in range(len(preds)) if correct_preds[i]==preds[i]]
+
+for i in range(6):
+    print len(filter(lambda x: x ==float(i),filter(correct_preds[i]==preds[i],preds)))
+for i in range(6):
+    print len(filter(lambda x: x ==float(i),correct_preds))
+print len(lst)
+print sum(lst)
+pred2 = clf.predict(mat)
