@@ -9,7 +9,7 @@ NUM_CLASS = 5
 EPSILON = .01
 
 # load data from fruit.csv
-raw_data = np.loadtxt('data/dumb_collection_ghost.csv', dtype=str, delimiter=';')
+raw_data = np.loadtxt('../data/dumb_collection_ghost.csv', dtype=str, delimiter=';')
 reader = csv.reader(raw_data, delimiter=' ')
 init = []
 for row in reader:
