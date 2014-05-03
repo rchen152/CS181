@@ -24,6 +24,7 @@ cats = train_matrix[:1000,1]
 mat = train_matrix[:1000,:3]
 test = test_matrix[:,:3]
 
+print test
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
 preds = clf.predict(test)
