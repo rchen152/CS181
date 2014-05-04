@@ -48,9 +48,9 @@ dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.W
 #previous_action = Directions.NORTH
 #previous_score = 0
 
-value_mat_file = open('ExampleTeam/value_matrix.p','r')
+'''value_mat_file = open('ExampleTeam/value_matrix.p','r')
 the_V = pickle.load(value_mat_file)
-value_mat_file.close()
+value_mat_file.close()'''
 
 MIN_STATE_VISITS = 5
 BAD_GHOST_DIST = 5
@@ -104,20 +104,21 @@ class CoequalizerAgent(BaseStudentAgent):
         # learned_params = cPickle.load("myparams.pkl")
         # learned_params = np.load("myparams.npy") 
 
-    def dirsByCriterion(self, state, pos, dist, f):
+    def dirsByCriterion(self, state, actions, pos, dist, f):
         tgtDirs = []
-        posDirs = state.getLegalPacmanActions()
-        for d in posDirs:
+        for d in actions:
             nextPos = state.pacmanFuturePosition([d])
             if f(self.distancer.getDistance(nextPos, pos),dist):
                 tgtDirs.append(d)
         return tgtDirs
 
-    def getClosestDirs(self, state, tgtPos, dist):
-        return self.dirsByCriterion(state, tgtPos, dist, lambda x,y: x < y)
+    def getClosestDirs(self, state, actions, tgtPos, dist):
+        return self.dirsByCriterion(
+            state, actions, tgtPos, dist, lambda x,y: x < y)
 
-    def getFarthestDirs(self, state, avoidPos, dist):
-        return self.dirsByCriterion(state, avoidPos, dist, lambda x,y: x > y)
+    def getFarthestDirs(self, state, actions, avoidPos, dist):
+        return self.dirsByCriterion(
+            state, actions, avoidPos, dist, lambda x,y: x > y)
 
     def getGoodGhostInfo(self, state):
         pacPos = state.getPacmanPosition()
@@ -133,72 +134,6 @@ class CoequalizerAgent(BaseStudentAgent):
         capClasses = cfy.capClassify([c[1] for c in caps])
         return [(self.distancer.getDistance(pacPos,caps[i][0]),caps[i][0])
                 for i in range(len(caps)) if capClasses[i]]
-
-    def getStateNum(self, observedState):
-        pacPos = observedState.getPacmanPosition()
-
-        # Compute bad ghost state
-        bgInd = -1
-        if badGhost:
-            # Get distance to bad ghost
-            bgPos = badGhost.getPosition()
-            bgDist = self.distancer.getDistance(pacPos, bgPos)
-            bgScared = 0
-            # If bad ghost in range, get closest direction to it
-            if 0 < bgDist and bgDist <= BG_RANGE:
-                bgDirs = self.getClosestDirs(observedState, bgPos, bgDist)
-                if bgDirs:
-                    scared = observedState.scaredGhostPresent()
-                    if scared:
-                        bgScared = 1
-                    # Get a number from the state
-                    bgInd = ((2*BG_RANGE*dir_dict[bgDirs[0]]) +
-                             (2*(bgDist - 1)) + bgScared)
-
-        # Compute good ghost state
-        ggInd = -1
-        # Get good ghosts in range
-        goodGhosts = self.getGoodGhostInfo(observedState)
-        goodGhosts = [g for g in goodGhosts
-                      if 0 < g[0] and g[0] <= GG_RANGE]
-        if len(goodGhosts) > 0:
-            # Get distance to juiciest ghost
-            jness = [AVG_CLASS_JUICE[c] for c in
-                     cfy.ghostClassify([g[1].getFeatures()
-                                        for g in goodGhosts])]
-            juicyInd = jness.index(max(jness))
-            juicyPos = goodGhosts[juicyInd][1].getPosition()
-            juicyDist = goodGhosts[juicyInd][0]
-            # Get direction to juiciest ghost
-            juicyDirs = self.getClosestDirs(
-                observedState, juicyPos, juicyDist)
-            if juicyDirs:
-                # Get a number from the state
-                ggInd = (GG_RANGE * dir_dict[juicyDirs[0]]) + (juicyDist-1)
- 
-        # Compute good capsule state
-        gcInd = -1
-        # Get good capsules
-        caps = self.getGoodCapInfo(observedState)
-        # Filter by good capsules in range
-        caps = [c for c in caps if 0 < c[0] and c[0] <= CAP_RANGE]
-        if len(caps) > 0:
-            # Get closest good capsule
-            gcDist,gcPos = min(caps)
-            # Compute direction to closest good capsule
-            gcDirs = self.getClosestDirs(observedState, gcPos, gcDist)
-            if gcDirs:
-                # Get a number from the state
-                gcInd = (CAP_RANGE * dir_dict[gcDirs[0]]) + (gcDist-1)
-        
-        # Get overall state
-        bgInd += 1
-        ggInd += 1
-        gcInd += 1
-        numGGStates = NUM_DIRS*GG_RANGE + 1
-        numGCStates = NUM_DIRS*CAP_RANGE + 1
-        return ((bgInd * numGGStates * numGCStates) +
-                (ggInd * numGCStates) + gcInd)
 
     def posBadGhosts(self, ghostState, observedState):
         return [g for g in ghostState if ObservedState.getGhostQuadrant(
@@ -246,21 +181,28 @@ class CoequalizerAgent(BaseStudentAgent):
 
     def chooseActionByHeuristic(self, observedState):
         global badGhost
+
         rDir = random.choice([d for d in observedState.getLegalPacmanActions()
                               if d != Directions.STOP])
-
         pacPos = observedState.getPacmanPosition()
+        pacDirs = observedState.getLegalPacmanActions()
+
         bgPos = badGhost.getPosition()
         bgDist = self.distancer.getDistance(pacPos, bgPos)
         if observedState.scaredGhostPresent():
-            return self.getClosestDirs(observedState, bgPos, bgDist)[0]
-            # TODO in ties, go in direction of (good?) capsule
+            dirs = self.getClosestDirs(
+                observedState, pacDirs, bgPos, bgDist)
+            if dirs:
+                # TODO in ties, go in direction of (good?) capsule
+                return dirs[0]
+            else:
+                return rDir
         else:
             if bgDist > BG_RANGE:
                 goodGhosts = self.getGoodGhostInfo(observedState)
                 g = min(goodGhosts)
                 dirs = self.getClosestDirs(
-                    observedState, g[1].getPosition(), g[0])
+                    observedState, pacDirs, g[1].getPosition(), g[0])
                 # TODO in ties?
                 if dirs:
                     return dirs[0]
@@ -274,14 +216,15 @@ class CoequalizerAgent(BaseStudentAgent):
                     c = min(goodCaps)
                     # TODO tie in distance to caps - go to cap closer to BG
                     # TODO tie in direction to closest cap - avoid ghost
-                    dirs = self.getClosestDirs(observedState,c[1],c[0])
+                    dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
                     if dirs:
                         return dirs[0]
                     else:
                         return rDir
                 else:
                     # TODO in tie - go toward bad capsule
-                    dirs = self.getFarthestDirs(observedState, bgPos, bgDist)
+                    dirs = self.getFarthestDirs(
+                        observedState, pacDirs, bgPos, bgDist)
                     if dirs:
                         return dirs[0]
                     else:
@@ -297,10 +240,9 @@ class CoequalizerAgent(BaseStudentAgent):
         badGhost = self.updateBadGhost(observedState)
         prevGhostStates = ghostStates
 
-        # print 'State: ' + str(self.getStateNum(observedState))
         return self.chooseActionByHeuristic(observedState)
 
-class CoSecondAgent(CoequalizerAgent):
+'''class CoSecondAgent(CoequalizerAgent):
     
     def enough_visits(self,observedState):
         global the_V
@@ -349,10 +291,79 @@ class CoSecondAgent(CoequalizerAgent):
         if (s == 0 or sa_ds[s]['count'] <= MIN_STATE_VISITS):
             return self.chooseActionByHeuristic(observedState)        
         else:
-            return self.enough_visits(observedState)
+            return self.enough_visits(observedState)'''
     
 
 class CollectAgent(CoequalizerAgent):
+
+    def getStateNum(self, observedState):
+        pacPos = observedState.getPacmanPosition()
+        pacDirs = observedState.getLegalPacmanActions()
+
+        # Compute bad ghost state
+        bgInd = -1
+        if badGhost:
+            # Get distance to bad ghost
+            bgPos = badGhost.getPosition()
+            bgDist = self.distancer.getDistance(pacPos, bgPos)
+            bgScared = 0
+            # If bad ghost in range, get closest direction to it
+            if 0 < bgDist and bgDist <= BG_RANGE:
+                bgDirs = self.getClosestDirs(
+                    observedState, pacDirs, bgPos, bgDist)
+                if bgDirs:
+                    scared = observedState.scaredGhostPresent()
+                    if scared:
+                        bgScared = 1
+                    # Get a number from the state
+                    bgInd = ((2*BG_RANGE*dir_dict[bgDirs[0]]) +
+                             (2*(bgDist - 1)) + bgScared)
+
+        # Compute good ghost state
+        ggInd = -1
+        # Get good ghosts in range
+        goodGhosts = self.getGoodGhostInfo(observedState)
+        goodGhosts = [g for g in goodGhosts
+                      if 0 < g[0] and g[0] <= GG_RANGE]
+        if len(goodGhosts) > 0:
+            # Get distance to juiciest ghost
+            jness = [AVG_CLASS_JUICE[c] for c in
+                     cfy.ghostClassify([g[1].getFeatures()
+                                        for g in goodGhosts])]
+            juicyInd = jness.index(max(jness))
+            juicyPos = goodGhosts[juicyInd][1].getPosition()
+            juicyDist = goodGhosts[juicyInd][0]
+            # Get direction to juiciest ghost
+            juicyDirs = self.getClosestDirs(
+                observedState, pacDirs, juicyPos, juicyDist)
+            if juicyDirs:
+                # Get a number from the state
+                ggInd = (GG_RANGE * dir_dict[juicyDirs[0]]) + (juicyDist-1)
+ 
+        # Compute good capsule state
+        gcInd = -1
+        # Get good capsules
+        caps = self.getGoodCapInfo(observedState)
+        # Filter by good capsules in range
+        caps = [c for c in caps if 0 < c[0] and c[0] <= CAP_RANGE]
+        if len(caps) > 0:
+            # Get closest good capsule
+            gcDist,gcPos = min(caps)
+            # Compute direction to closest good capsule
+            gcDirs = self.getClosestDirs(observedState, pacDirs, gcPos, gcDist)
+            if gcDirs:
+                # Get a number from the state
+                gcInd = (CAP_RANGE * dir_dict[gcDirs[0]]) + (gcDist-1)
+        
+        # Get overall state
+        bgInd += 1
+        ggInd += 1
+        gcInd += 1
+        numGGStates = NUM_DIRS*GG_RANGE + 1
+        numGCStates = NUM_DIRS*CAP_RANGE + 1
+        return ((bgInd * numGGStates * numGCStates) +
+                (ggInd * numGCStates) + gcInd)
+
     def chooseAction(self,observedState):
         global sa_ds
         global previous_state
