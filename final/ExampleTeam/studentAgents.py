@@ -40,13 +40,22 @@ sa = open('ExampleTeam/pickled_sa.p','r')
 sa_ds = pickle.load(sa)
 sa.close()
 
-#print len(filter(lambda x: len(x) !=2 , sa_ds))
+#print sa_ds
+#print len(sa_ds)
+#print len(filter(lambda x: len(x) >= 100 , sa_ds))
 
 dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
 
 #previous_state = 0
 #previous_action = Directions.NORTH
 #previous_score = 0
+
+value_mat_file = open('ExampleTeam/value_matrix.p','r')
+the_V = pickle.load(value_mat_file)
+value_mat_file.close()
+
+MIN_STATE_VISITS = 5
+BAD_GHOST_DIST = 5
 
 class BaseStudentAgent(object):
     """Superclass of agents students will write"""
@@ -243,6 +252,46 @@ class CoequalizerAgent(BaseStudentAgent):
                 observedState,badGhost))
         prevGhostStates = ghostStates
         return random.choice(observedState.getLegalPacmanActions())
+
+
+class CoSecondAgent(CoequalizerAgent):
+    
+    def enough_visits(self,observedState):
+        global the_V
+        remaining_time = observedState.getNumMovesLeft()
+        legalActs = [a for a in observedState.getLegalPacmanActions()]
+        fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
+        total_reward = []         
+        s = self.getStateNum(observedState)
+        for i in range(len(fil_legal)):
+            x = fil_legal[i]
+        # calculate the award for (s, x)
+            my_award = float(sa_ds[s * 4 + dir_dict[x]]['total_reward'])/sa_ds[s * 4 + dir_dict[x]]['count']
+        # calculate expected vs
+            expected_vs = 0
+            for new_state in sa_ds[s * 4 + dir_dict[x]]:
+                if (new_state != 'count' and new_state != 'total_reward'):
+                    my_p = float(sa_ds[s * 4 + dir_dict[x]][new_state])/sa_ds[s * 4 + dir_dict[x]]['count'] 
+                # Not sure if this index is correct
+                    if (remaining_time <1):
+                        print "no time remaining error"
+                        return Directions.STOP
+
+                    expected_vs += my_p * the_V[remaining_time -1][new_state]
+            net_reward = my_award + expected_vs
+            total_reward.append(net_reward)
+    # Then choose the x with maximum net_reward to return
+        return fil_legal[total_reward.index(max(total_reward))]
+
+
+    def chooseAction(self, observedState):
+        s = self.getStateNum(observedState)
+        if (s == 0 or sa_ds[s]['count'] <= MIN_STATE_VISITS):
+            #Call rebecca's function
+            legalActs = [a for a in observedState.getLegalPacmanActions()]
+            return random.choice(legalActs)
+        else:
+            return self.enough_visits(observedState)
     
 class CollectAgent(BaseStudentAgent):
     def posBadGhosts(self, ghostState, observedState):
