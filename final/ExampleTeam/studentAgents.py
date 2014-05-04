@@ -473,7 +473,6 @@ class CollectAgent(BaseStudentAgent):
         minGhost = None
         ghostStates = observedState.getGhostStates()
         for g in ghostStates:
-            print g.getFeatures()
             if not (g.getFeatures() == badGhost.getFeatures()).all():
                 dist = self.distancer.getDistance(
                     observedState.getPacmanPosition(), g.getPosition())
