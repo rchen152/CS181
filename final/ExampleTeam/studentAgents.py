@@ -104,20 +104,21 @@ class CoequalizerAgent(BaseStudentAgent):
         # learned_params = cPickle.load("myparams.pkl")
         # learned_params = np.load("myparams.npy") 
 
-    def dirsByCriterion(self, state, pos, dist, f):
+    def dirsByCriterion(self, state, actions, pos, dist, f):
         tgtDirs = []
-        posDirs = state.getLegalPacmanActions()
-        for d in posDirs:
+        for d in actions:
             nextPos = state.pacmanFuturePosition([d])
             if f(self.distancer.getDistance(nextPos, pos),dist):
                 tgtDirs.append(d)
         return tgtDirs
 
-    def getClosestDirs(self, state, tgtPos, dist):
-        return self.dirsByCriterion(state, tgtPos, dist, lambda x,y: x < y)
+    def getClosestDirs(self, state, actions, tgtPos, dist):
+        return self.dirsByCriterion(
+            state, actions, tgtPos, dist, lambda x,y: x < y)
 
-    def getFarthestDirs(self, state, avoidPos, dist):
-        return self.dirsByCriterion(state, avoidPos, dist, lambda x,y: x > y)
+    def getFarthestDirs(self, state, actions, avoidPos, dist):
+        return self.dirsByCriterion(
+            state, actions, avoidPos, dist, lambda x,y: x > y)
 
     def getGoodGhostInfo(self, state):
         pacPos = state.getPacmanPosition()
@@ -136,6 +137,7 @@ class CoequalizerAgent(BaseStudentAgent):
 
     def getStateNum(self, observedState):
         pacPos = observedState.getPacmanPosition()
+        pacDirs = observedState.getLegalPacmanActions()
 
         # Compute bad ghost state
         bgInd = -1
@@ -146,7 +148,8 @@ class CoequalizerAgent(BaseStudentAgent):
             bgScared = 0
             # If bad ghost in range, get closest direction to it
             if 0 < bgDist and bgDist <= BG_RANGE:
-                bgDirs = self.getClosestDirs(observedState, bgPos, bgDist)
+                bgDirs = self.getClosestDirs(
+                    observedState, pacDirs, bgPos, bgDist)
                 if bgDirs:
                     scared = observedState.scaredGhostPresent()
                     if scared:
@@ -171,7 +174,7 @@ class CoequalizerAgent(BaseStudentAgent):
             juicyDist = goodGhosts[juicyInd][0]
             # Get direction to juiciest ghost
             juicyDirs = self.getClosestDirs(
-                observedState, juicyPos, juicyDist)
+                observedState, pacDirs, juicyPos, juicyDist)
             if juicyDirs:
                 # Get a number from the state
                 ggInd = (GG_RANGE * dir_dict[juicyDirs[0]]) + (juicyDist-1)
@@ -186,7 +189,7 @@ class CoequalizerAgent(BaseStudentAgent):
             # Get closest good capsule
             gcDist,gcPos = min(caps)
             # Compute direction to closest good capsule
-            gcDirs = self.getClosestDirs(observedState, gcPos, gcDist)
+            gcDirs = self.getClosestDirs(observedState, pacDirs, gcPos, gcDist)
             if gcDirs:
                 # Get a number from the state
                 gcInd = (CAP_RANGE * dir_dict[gcDirs[0]]) + (gcDist-1)
@@ -246,21 +249,24 @@ class CoequalizerAgent(BaseStudentAgent):
 
     def chooseActionByHeuristic(self, observedState):
         global badGhost
+
         rDir = random.choice([d for d in observedState.getLegalPacmanActions()
                               if d != Directions.STOP])
-
         pacPos = observedState.getPacmanPosition()
+        pacDirs = observedState.getLegalPacmanActions()
+
         bgPos = badGhost.getPosition()
         bgDist = self.distancer.getDistance(pacPos, bgPos)
         if observedState.scaredGhostPresent():
-            return self.getClosestDirs(observedState, bgPos, bgDist)[0]
+            return self.getClosestDirs(
+                observedState, pacDirs, bgPos, bgDist)[0]
             # TODO in ties, go in direction of (good?) capsule
         else:
             if bgDist > BG_RANGE:
                 goodGhosts = self.getGoodGhostInfo(observedState)
                 g = min(goodGhosts)
                 dirs = self.getClosestDirs(
-                    observedState, g[1].getPosition(), g[0])
+                    observedState, pacDirs, g[1].getPosition(), g[0])
                 # TODO in ties?
                 if dirs:
                     return dirs[0]
@@ -274,14 +280,15 @@ class CoequalizerAgent(BaseStudentAgent):
                     c = min(goodCaps)
                     # TODO tie in distance to caps - go to cap closer to BG
                     # TODO tie in direction to closest cap - avoid ghost
-                    dirs = self.getClosestDirs(observedState,c[1],c[0])
+                    dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
                     if dirs:
                         return dirs[0]
                     else:
                         return rDir
                 else:
                     # TODO in tie - go toward bad capsule
-                    dirs = self.getFarthestDirs(observedState, bgPos, bgDist)
+                    dirs = self.getFarthestDirs(
+                        observedState, pacDirs, bgPos, bgDist)
                     if dirs:
                         return dirs[0]
                     else:
@@ -297,7 +304,7 @@ class CoequalizerAgent(BaseStudentAgent):
         badGhost = self.updateBadGhost(observedState)
         prevGhostStates = ghostStates
 
-        # print 'State: ' + str(self.getStateNum(observedState))
+        print 'State: ' + str(self.getStateNum(observedState))
         return self.chooseActionByHeuristic(observedState)
 
 class CoSecondAgent(CoequalizerAgent):
