@@ -36,7 +36,11 @@ dim = (numDirs*bgRange*2 + 1, numDirs*ggRange + 1, numDirs*capRange + 1)'''
 
 num_states = 3861
 num_actions = 4
-sa_ds = pickle.load(open('ExampleTeam/pickled_sa.p','r'))
+sa = open('ExampleTeam/pickled_sa.p','r')
+sa_ds = pickle.load(sa)
+sa.close()
+
+#print len(filter(lambda x: len(x) !=2 , sa_ds))
 
 dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
 
@@ -93,18 +97,6 @@ class CoequalizerAgent(BaseStudentAgent):
         # learned_params = np.load("myparams.npy") 
         
     def getStateNum(self, observedState):
-        def dirInd(d):
-            if d == Directions.STOP:
-                return 4
-            elif d == Directions.NORTH:
-                return 3
-            elif d == Directions.SOUTH:
-                return 2
-            elif d == Directions.EAST:
-                return 1
-            else:
-                return 0
-
         pacPos = observedState.getPacmanPosition()
 
         # Compute bad ghost state
@@ -122,15 +114,14 @@ class CoequalizerAgent(BaseStudentAgent):
                     nextPos = observedState.pacmanFuturePosition([d])
                     if self.distancer.getDistance(nextPos, bgPos) < bgDist:
                         bgDir = d
+                        # Check whether the bad ghost is scared
+                        scared = observedState.scaredGhostPresent()
+                        if scared:
+                            bgScared = 1
+                        # Get a number from the state
+                        bgInd = ((2*BG_RANGE*dir_dict[bgDir]) +
+                                 (2*(bgDist - 1)) + bgScared)
                         break
-                # Check whether the bad ghost is scared
-                scared = observedState.scaredGhostPresent()
-                if scared:
-                    bgScared = 1
-                # Get a number from the state
-                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
-                         (2*(bgDist - 1)) + bgScared)
-
         # Compute good ghost state
         ggInd = -1
         # Get good ghosts in range
@@ -157,10 +148,10 @@ class CoequalizerAgent(BaseStudentAgent):
                 nextPos = observedState.pacmanFuturePosition([d])
                 if self.distancer.getDistance(nextPos, juicyPos) < juicyDist:
                     juicyDir = d
-                    break
-            # Get a number from the state
-            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
-        
+                    # Get a number from the state
+                    ggInd = (GG_RANGE * dir_dict[juicyDir]) + (juicyDist-1)
+                    break       
+ 
         # Compute good capsule state
         gcInd = -1
         # Get all capsules
@@ -183,9 +174,9 @@ class CoequalizerAgent(BaseStudentAgent):
                 nextPos = observedState.pacmanFuturePosition([d])
                 if self.distancer.getDistance(nextPos, gcPos) < gcDist:
                     gcDir = d
+                    # Get a number from the state
+                    gcInd = (CAP_RANGE * dir_dict[gcDir]) + (gcDist-1)
                     break
-            # Get a number from the state
-            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
         
         # Get overall state
         bgInd += 1
@@ -248,27 +239,57 @@ class CoequalizerAgent(BaseStudentAgent):
         if len(ghostStates) != NUM_GHOSTS:
             print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
         badGhost = self.updateBadGhost(observedState)
-        print ObservedState.getGhostQuadrant(observedState,badGhost)
+        print 'Bad quad: ' + str(ObservedState.getGhostQuadrant(
+                observedState,badGhost))
         prevGhostStates = ghostStates
-
-        legalActs = observedState.getLegalPacmanActions()
-        return random.choice(legalActs)
+        return random.choice(observedState.getLegalPacmanActions())
     
 class CollectAgent(BaseStudentAgent):
+    def posBadGhosts(self, ghostState, observedState):
+        return [g for g in ghostState if ObservedState.getGhostQuadrant(
+                observedState,g) == BAD_QUAD]
+
+
+    def updateBadGhost(self, observedState):
+        global badGhost
+        global prevGhostStates
+        
+        ghostStates = observedState.getGhostStates()
+        posBadGhosts = self.posBadGhosts(ghostStates,observedState)
+        numPosGhosts = len(posBadGhosts)
+
+        if(GAME_LEN == observedState.getNumMovesLeft()):
+            if numPosGhosts != 1:
+                print 'Error: wrong number of bad ghosts'
+                return None
+            else:
+                return posBadGhosts[0]
+
+        bgList = [g for g in ghostStates
+                  if (g.getFeatures() == badGhost.getFeatures()).all()]
+        if not bgList:
+            if numPosGhosts < 1:
+                print 'Error: no quad 4 ghosts'
+                return None
+            elif numPosGhosts == 1:
+                return posBadGhosts[0]
+            else:
+                bGCandidates = [g for g in posBadGhosts if not
+                                [p for p in prevGhostStates if
+                                 (g.getFeatures() == p.getFeatures()).all()]]
+                if len(bGCandidates) != 1:
+                    print 'Error: not exactly one ghost regenerated in quad 4'
+                    return None
+                else:
+                   return bGCandidates[0]
+        else:
+            if len(bgList) > 1:
+                print 'Error: multiple identical bad ghosts'
+                return None
+            else:
+                return bgList[0]
 
     def getStateNum(self, observedState):
-        def dirInd(d):
-            if d == Directions.STOP:
-                return 4
-            elif d == Directions.NORTH:
-                return 3
-            elif d == Directions.SOUTH:
-                return 2
-            elif d == Directions.EAST:
-                return 1
-            else:
-                return 0
-
         pacPos = observedState.getPacmanPosition()
 
         # Compute bad ghost state
@@ -292,7 +313,7 @@ class CollectAgent(BaseStudentAgent):
                 if scared:
                     bgScared = 1
                 # Get a number from the state
-                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                bgInd = ((2*BG_RANGE*dir_dict[bgDir]) +
                          (2*(bgDist - 1)) + bgScared)
 
         # Compute good ghost state
@@ -323,7 +344,7 @@ class CollectAgent(BaseStudentAgent):
                     juicyDir = d
                     break
             # Get a number from the state
-            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+            ggInd = (GG_RANGE * dir_dict[juicyDir]) + (juicyDist-1)
         
         # Compute good capsule state
         gcInd = -1
@@ -349,7 +370,7 @@ class CollectAgent(BaseStudentAgent):
                     gcDir = d
                     break
             # Get a number from the state
-            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
+            gcInd = (CAP_RANGE * dir_dict[gcDir]) + (gcDist-1)
         
         # Get overall state
         bgInd += 1
@@ -384,36 +405,75 @@ class CollectAgent(BaseStudentAgent):
         global previous_state
         global previous_action
         global old_score
+        global badGhost
+        global prevGhostStates
+
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        prevGhostStates = ghostStates
         
         legalActs = [a for a in observedState.getLegalPacmanActions()]
-        if (legalActs == Directions.STOP):
+        if (legalActs == [Directions.STOP]):
             print "error you are trapped by four walls"
             previous_state = observedState
             old_score = observedState.getScore()
             return Directions.STOP
 
-        if (observedState.getNumMovesLeft == 1):
-            pickle.dump(sa_ds,open("pickled_sa.p","w"))
+        if (observedState.getNumMovesLeft() == 1):
+            sa_file = open("ExampleTeam/pickled_sa.p","w")
+            pickle.dump(sa_ds,sa_file)
+            sa_file.close()
+            print sa_ds
+            
 
         if (observedState.getNumMovesLeft() != GAME_LEN):
             self.explore(observedState)        
-            
+
+    
         fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
         s = self.getStateNum(observedState)
 
-        print sa_ds
         count_lst = [None]*len(fil_legal)
         for i in range(len(fil_legal)):
             dir_num = dir_dict[fil_legal[i]]
 
             count_lst[i] = sa_ds[4*s + dir_num]['count'] 
-                         
+
         previous_state = observedState
         old_score = observedState.getScore()
-        
-        act = fil_legal[count_lst.index(min(count_lst))]
-        previous_action = act
 
+        state = self.getStateNum(observedState)
+        if state != 0:
+            act = fil_legal[count_lst.index(min(count_lst))]
+            previous_action = act
+            return act
+
+        minDist = None
+        minGhost = None
+        ghostStates = observedState.getGhostStates()
+        for g in ghostStates:
+            if not (g.getFeatures() == badGhost.getFeatures()).all():
+                dist = self.distancer.getDistance(
+                    observedState.getPacmanPosition(), g.getPosition())
+                if not minGhost or dist < minDist:
+                    minDist = dist
+                    minGhost = g
+
+        posDirs = observedState.getLegalPacmanActions()
+        for d in posDirs:
+            nextPos = observedState.pacmanFuturePosition([d])
+            if self.distancer.getDistance(nextPos,
+                                          minGhost.getPosition()) < minDist:
+                previous_action = d
+                return d
+
+#in case there are no possible directions which get him closer, which doesn't make sense
+        act = random.choice([d for d in observedState.getLegalPacmanActions()
+                              if not d == Directions.STOP])
+        previous_action = act
+        print "hi"+ str(previous_action)
         return act
 
 class FuturePosAgent(BaseStudentAgent):
