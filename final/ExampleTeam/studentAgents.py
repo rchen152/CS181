@@ -417,6 +417,7 @@ class CollectAgent(BaseStudentAgent):
             return act
         minDist = None
         minGhost = None
+        ghostStates = observedState.getGhostStates()
         for g in ghostStates:
             if not (g.getFeatures() == badGhost.getFeatures()).all():
                 dist = self.distancer.getDistance(
