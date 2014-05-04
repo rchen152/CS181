@@ -4,19 +4,35 @@ from game import Directions
 from observedState import ObservedState
 import numpy as np
 import csv
+
 from util import random, manhattanDistance, Counter, chooseFromDistribution, raiseNotDefined
 import cPickle as pickle
-import classify
+from util import random, manhattanDistance, Counter, chooseFromDistribution
+import pickle
+import classify as cfy
 
 
-
-GOOD_CAPS_CSV = 'data/good_caps_train.csv'
 GAME_LEN = 1000
 BAD_QUAD = 4
 NUM_GHOSTS = 4
-bad_ghost_vec = np.array([])
-previous_ghost_state = np.array([])
-avg_class_juice =[28.867748179685883, 52.257299401447447, 153.57566648602614, 17.2900555038538, 0,0]
+
+AVG_CLASS_JUICE =[28.867748179685883, 52.257299401447447, 153.57566648602614,
+                  17.2900555038538, 0,0]
+
+BG_RANGE = 4
+GG_RANGE = 3
+CAP_RANGE = 2
+NUM_DIRS = 4
+NUM_MOVES = NUM_DIRS + 1
+
+badGhost = None
+prevGhostStates = []
+
+'''badGhostInfo = (direction,distance,isScared)
+goodGhostInfo = (direction,distance)
+(NOT USED) wallInfo = [isPresent,isPresent,isPresent,isPresent]
+goodCapInfo = (direction,distance)
+dim = (numDirs*bgRange*2 + 1, numDirs*ggRange + 1, numDirs*capRange + 1)'''
 
 num_states = 3861
 num_actions = 4
@@ -53,8 +69,6 @@ class CoequalizerAgent(BaseStudentAgent):
     of this class so it does well in the pacman game!
     """
 
-
-
     def __init__(self, *args, **kwargs):
         """
         arguments given with the -a command line option will be passed here
@@ -74,71 +88,272 @@ class CoequalizerAgent(BaseStudentAgent):
         # learned_params = cPickle.load("myparams.pkl")
         # learned_params = np.load("myparams.npy") 
         
-        ghost_params = pickle.load(open('train/pickled_tree_101_200.p','r'))
+    def getStateNum(self, observedState):
+        def dirInd(d):
+            if d == Directions.STOP:
+                return 4
+            elif d == Directions.NORTH:
+                return 3
+            elif d == Directions.SOUTH:
+                return 2
+            elif d == Directions.EAST:
+                return 1
+            else:
+                return 0
 
+        pacPos = observedState.getPacmanPosition()
 
-    def badFeature(self, ghostState,observedState):
-        badghosts = filter(lambda x: ObservedState.getGhostQuadrant(observedState,x) == BAD_QUAD,ghostState)
-        if(len(badghosts)<1):
-            print "fewer bad ghosts than expected error"
-            return None
-        elif(len(badghosts) > 1):
-            print "more bad ghosts than expected error"
-        else:    
-            return badghosts[0].getFeatures()
+        # Compute bad ghost state
+        bgInd = -1
+        if badGhost:
+            # Get distance to bad ghost
+            bgPos = badGhost.getPosition()
+            bgDir = Directions.STOP
+            bgDist = self.distancer.getDistance(pacPos, bgPos)
+            bgScared = 0
+            # If bad ghost in range, get closest direction to it
+            if 0 < bgDist and bgDist <= BG_RANGE:
+                posDirs = observedState.getLegalPacmanActions()
+                for d in posDirs:
+                    nextPos = observedState.pacmanFuturePosition([d])
+                    if self.distancer.getDistance(nextPos, bgPos) < bgDist:
+                        bgDir = d
+                        break
+                # Check whether the bad ghost is scared
+                scared = observedState.scaredGhostPresent()
+                if scared:
+                    bgScared = 1
+                # Get a number from the state
+                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                         (2*(bgDist - 1)) + bgScared)
+
+        # Compute good ghost state
+        ggInd = -1
+        # Get good ghosts in range
+        goodGhosts = [g for g in observedState.getGhostStates()
+                      if not badGhost
+                      or not (g.getFeatures() == badGhost.getFeatures()).all()]
+        goodDists = [self.distancer.getDistance(pacPos, g.getPosition())
+                     for g in goodGhosts]
+        goodGhosts = [(goodGhosts[i],goodDists[i])
+                       for i in range(len(goodGhosts))
+                       if 0 < goodDists[i] and goodDists[i] <= GG_RANGE]
+        if len(goodGhosts) > 0:
+            # Get distance to juiciest ghost
+            jness = [AVG_CLASS_JUICE[c] for c in
+                     cfy.ghostClassify([g[0].getFeatures()
+                                        for g in goodGhosts])]
+            juicyInd = jness.index(max(jness))
+            juicyPos = goodGhosts[juicyInd][0].getPosition()
+            juicyDist = goodGhosts[juicyInd][1]
+            # Get direction to juiciest ghost
+            juicyDir = Directions.STOP
+            posDirs = observedState.getLegalPacmanActions()
+            for d in posDirs:
+                nextPos = observedState.pacmanFuturePosition([d])
+                if self.distancer.getDistance(nextPos, juicyPos) < juicyDist:
+                    juicyDir = d
+                    break
+            # Get a number from the state
+            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+        
+        # Compute good capsule state
+        gcInd = -1
+        # Get all capsules
+        caps = observedState.getCapsuleData()
+        capPosLst = [c[0] for c in caps]
+        capDists = [self.distancer.getDistance(pacPos, cp) for cp in capPosLst]
+        # Classify
+        capClasses = cfy.capClassify([c[1] for c in caps])
+        # Filter by good capsules in range
+        caps = [(capDists[i],capPosLst[i]) for i in range(len(caps))
+                if 0 < capDists[i] and capDists[i] <= CAP_RANGE
+                and capClasses[i]]
+        if len(caps) > 0:
+            # Get closest good capsule
+            gcDist,gcPos = min(caps)
+            # Compute direction to closest good capsule
+            gcDir = Directions.STOP
+            posDirs = observedState.getLegalPacmanActions()
+            for d in posDirs:
+                nextPos = observedState.pacmanFuturePosition([d])
+                if self.distancer.getDistance(nextPos, gcPos) < gcDist:
+                    gcDir = d
+                    break
+            # Get a number from the state
+            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
+        
+        # Get overall state
+        bgInd += 1
+        ggInd += 1
+        gcInd += 1
+        numGGStates = NUM_DIRS*GG_RANGE + 1
+        numGCStates = NUM_DIRS*CAP_RANGE + 1
+        return ((bgInd * numGGStates * numGCStates) +
+                (ggInd * numGCStates) + gcInd)
+
+    def posBadGhosts(self, ghostState, observedState):
+        return [g for g in ghostState if ObservedState.getGhostQuadrant(
+                observedState,g) == BAD_QUAD]
+
 
     def updateBadGhost(self, observedState):
-        global bad_ghost_vec
-        global previous_ghost_state
+        global badGhost
+        global prevGhostStates
         
-        ghost_states = observedState.getGhostStates() # states have getPosition() and getFeatures() methods
+        ghostStates = observedState.getGhostStates()
+        posBadGhosts = self.posBadGhosts(ghostStates,observedState)
+        numPosGhosts = len(posBadGhosts)
+
         if(GAME_LEN == observedState.getNumMovesLeft()):
-            return self.badFeature(ghost_states,observedState)
+            if numPosGhosts != 1:
+                print 'Error: wrong number of bad ghosts'
+                return None
+            else:
+                return posBadGhosts[0]
 
-        ghost_features = map(lambda x : x.getFeatures(),ghost_states)
-
-        if (filter(lambda x : (x == bad_ghost_vec).all(), ghost_features) == []):
-            possible_ghosts = filter(lambda x: ObservedState.getGhostQuadrant(observedState,x) == BAD_QUAD,ghost_states)
-            if(len(possible_ghosts)<1):
-                print "error no quad 4 ghosts"
-                return np.array([])
-            if(len(possible_ghosts) == 1):
-                return possible_ghosts[0].getFeatures()
-            if(len(possible_ghosts)>1):
-                prev_ghost_features = map(lambda x : x.getFeatures() , previous_ghost_state)
-                b_g_candidates = filter(lambda x : (filter(lambda y : (y==x).all(),prev_ghost_features)==[]), possible_ghosts)
-                if(len(b_g_candidates) != 1):
-                    print "not exactly one ghost regenerated in quadrant  4 error"
-                    return np.array([])
-                else: return b_g_candidates[0].getFeatures()
+        bgList = [g for g in ghostStates
+                  if (g.getFeatures() == badGhost.getFeatures()).all()]
+        if not bgList:
+            if numPosGhosts < 1:
+                print 'Error: no quad 4 ghosts'
+                return None
+            elif numPosGhosts == 1:
+                return posBadGhosts[0]
+            else:
+                bGCandidates = [g for g in posBadGhosts if not
+                                [p for p in prevGhostStates if
+                                 (g.getFeatures() == p.getFeatures()).all()]]
+                if len(bGCandidates) != 1:
+                    print 'Error: not exactly one ghost regenerated in quad 4'
+                    return None
+                else:
+                    return bGCandidates[0]
         else:
-            return bad_ghost_vec
+            if len(bgList) > 1:
+                print 'Error: multiple identical bad ghosts'
+            else:
+                return bgList[0]
 
     def chooseAction(self, observedState):
+        global badGhost
+        global prevGhostStates
 
-        global bad_ghost_vec
-        global previous_ghost_state
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        print ObservedState.getGhostQuadrant(observedState,badGhost)
+        prevGhostStates = ghostStates
 
-
-
-        ghost_states = observedState.getGhostStates() # states have getPosition() and getFeatures() methods
-        ghost_features = map(lambda x : x.getFeatures(),ghost_states)
-        if(len(ghost_features) != NUM_GHOSTS):
-            print "unexpected number of ghosts" + str(len(ghost_features))
-
-        bad_ghost_vec = self.updateBadGhost(observedState)
-        bad_ghost = filter(lambda x: (bad_ghost_vec == x.getFeatures()).all(),ghost_states)[0]
-        print ObservedState.getGhostQuadrant(observedState,bad_ghost)
-
-
-
-
-
-        previous_ghost_state = ghost_states
-#Rewrite what we return
-        return best_action
-
+        legalActs = observedState.getLegalPacmanActions()
+        return random.choice(legalActs)
+    
 class CollectAgent(BaseStudentAgent):
+
+    def getStateNum(self, observedState):
+        def dirInd(d):
+            if d == Directions.STOP:
+                return 4
+            elif d == Directions.NORTH:
+                return 3
+            elif d == Directions.SOUTH:
+                return 2
+            elif d == Directions.EAST:
+                return 1
+            else:
+                return 0
+
+        pacPos = observedState.getPacmanPosition()
+
+        # Compute bad ghost state
+        bgInd = -1
+        if badGhost:
+            # Get distance to bad ghost
+            bgPos = badGhost.getPosition()
+            bgDir = Directions.STOP
+            bgDist = self.distancer.getDistance(pacPos, bgPos)
+            bgScared = 0
+            # If bad ghost in range, get closest direction to it
+            if 0 < bgDist and bgDist <= BG_RANGE:
+                posDirs = observedState.getLegalPacmanActions()
+                for d in posDirs:
+                    nextPos = observedState.pacmanFuturePosition([d])
+                    if self.distancer.getDistance(nextPos, bgPos) < bgDist:
+                        bgDir = d
+                        break
+                # Check whether the bad ghost is scared
+                scared = observedState.scaredGhostPresent()
+                if scared:
+                    bgScared = 1
+                # Get a number from the state
+                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                         (2*(bgDist - 1)) + bgScared)
+
+        # Compute good ghost state
+        ggInd = -1
+        # Get good ghosts in range
+        goodGhosts = [g for g in observedState.getGhostStates()
+                      if not badGhost
+                      or not (g.getFeatures() == badGhost.getFeatures()).all()]
+        goodDists = [self.distancer.getDistance(pacPos, g.getPosition())
+                     for g in goodGhosts]
+        goodGhosts = [(goodGhosts[i],goodDists[i])
+                       for i in range(len(goodGhosts))
+                       if 0 < goodDists[i] and goodDists[i] <= GG_RANGE]
+        if len(goodGhosts) > 0:
+            # Get distance to juiciest ghost
+            jness = [AVG_CLASS_JUICE[c] for c in
+                     cfy.ghostClassify([g[0].getFeatures()
+                                        for g in goodGhosts])]
+            juicyInd = jness.index(max(jness))
+            juicyPos = goodGhosts[juicyInd][0].getPosition()
+            juicyDist = goodGhosts[juicyInd][1]
+            # Get direction to juiciest ghost
+            juicyDir = Directions.STOP
+            posDirs = observedState.getLegalPacmanActions()
+            for d in posDirs:
+                nextPos = observedState.pacmanFuturePosition([d])
+                if self.distancer.getDistance(nextPos, juicyPos) < juicyDist:
+                    juicyDir = d
+                    break
+            # Get a number from the state
+            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+        
+        # Compute good capsule state
+        gcInd = -1
+        # Get all capsules
+        caps = observedState.getCapsuleData()
+        capPosLst = [c[0] for c in caps]
+        capDists = [self.distancer.getDistance(pacPos, cp) for cp in capPosLst]
+        # Classify
+        capClasses = cfy.capClassify([c[1] for c in caps])
+        # Filter by good capsules in range
+        caps = [(capDists[i],capPosLst[i]) for i in range(len(caps))
+                if 0 < capDists[i] and capDists[i] <= CAP_RANGE
+                and capClasses[i]]
+        if len(caps) > 0:
+            # Get closest good capsule
+            gcDist,gcPos = min(caps)
+            # Compute direction to closest good capsule
+            gcDir = Directions.STOP
+            posDirs = observedState.getLegalPacmanActions()
+            for d in posDirs:
+                nextPos = observedState.pacmanFuturePosition([d])
+                if self.distancer.getDistance(nextPos, gcPos) < gcDist:
+                    gcDir = d
+                    break
+            # Get a number from the state
+            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
+        
+        # Get overall state
+        bgInd += 1
+        ggInd += 1
+        gcInd += 1
+        numGGStates = NUM_DIRS*GG_RANGE + 1
+        numGCStates = NUM_DIRS*CAP_RANGE + 1
+        return ((bgInd * numGGStates * numGCStates) +
+                (ggInd * numGCStates) + gcInd)
 
     def explore(self,observedState):
         global sa_ds
@@ -191,7 +406,6 @@ class CollectAgent(BaseStudentAgent):
 
         return act
 
-
 class FuturePosAgent(BaseStudentAgent):
     def chooseAction(self, observedState):
         legalActs = [a for a in observedState.getLegalPacmanActions()]
@@ -220,19 +434,8 @@ class FuturePosAgent(BaseStudentAgent):
 class DataAgent(BaseStudentAgent):
 
     def chooseAction(self, observedState):
-        pacmanPosition = observedState.getPacmanPosition()
-        legalActs = [a for a in observedState.getLegalPacmanActions()]
-        gcaps = observedState.getGoodCapsuleExamples()
-        f = open(GOOD_CAPS_CSV, "w+")
-        f.close()
-        with open(GOOD_CAPS_CSV, 'wb') as csvfile:
-            writer = csv.writer(csvfile, delimiter=' ',
-                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            for row in gcaps:
-                writer.writerow(row)
-        return random.choice(legalActs )
-
-
+        legalActs = observedState.getLegalPacmanActions()
+        return random.choice(legalActs)
 
 ## Below is the class students need to rename and modify
 
