@@ -432,31 +432,8 @@ class CollectAgent(CoequalizerAgent):
             act = fil_legal[count_lst.index(min(count_lst))]
             previous_action = act
             return act
-
-        minDist = None
-        minGhost = None
-        ghostStates = observedState.getGhostStates()
-        for g in ghostStates:
-            if not (g.getFeatures() == badGhost.getFeatures()).all():
-                dist = self.distancer.getDistance(
-                    observedState.getPacmanPosition(), g.getPosition())
-                if not minGhost or dist < minDist:
-                    minDist = dist
-                    minGhost = g
-
-        posDirs = observedState.getLegalPacmanActions()
-        for d in posDirs:
-            nextPos = observedState.pacmanFuturePosition([d])
-            if self.distancer.getDistance(nextPos,
-                                          minGhost.getPosition()) < minDist:
-                previous_action = d
-                return d
-
-#in case there are no possible directions which get him closer, which doesn't make sense
-        act = random.choice([d for d in observedState.getLegalPacmanActions()
-                              if not d == Directions.STOP])
+        act = self.chooseActionByHeuristic(observedState)
         previous_action = act
-        print "hi"+ str(previous_action)
         return act
     
 class FuturePosAgent(BaseStudentAgent):
