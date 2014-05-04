@@ -253,6 +253,49 @@ class CoequalizerAgent(BaseStudentAgent):
         return random.choice(observedState.getLegalPacmanActions())
     
 class CollectAgent(BaseStudentAgent):
+    def posBadGhosts(self, ghostState, observedState):
+        return [g for g in ghostState if ObservedState.getGhostQuadrant(
+                observedState,g) == BAD_QUAD]
+
+
+    def updateBadGhost(self, observedState):
+        global badGhost
+        global prevGhostStates
+        
+        ghostStates = observedState.getGhostStates()
+        posBadGhosts = self.posBadGhosts(ghostStates,observedState)
+        numPosGhosts = len(posBadGhosts)
+
+        if(GAME_LEN == observedState.getNumMovesLeft()):
+            if numPosGhosts != 1:
+                print 'Error: wrong number of bad ghosts'
+                return None
+            else:
+                return posBadGhosts[0]
+
+        bgList = [g for g in ghostStates
+                  if (g.getFeatures() == badGhost.getFeatures()).all()]
+        if not bgList:
+            if numPosGhosts < 1:
+                print 'Error: no quad 4 ghosts'
+                return None
+            elif numPosGhosts == 1:
+                return posBadGhosts[0]
+            else:
+                bGCandidates = [g for g in posBadGhosts if not
+                                [p for p in prevGhostStates if
+                                 (g.getFeatures() == p.getFeatures()).all()]]
+                if len(bGCandidates) != 1:
+                    print 'Error: not exactly one ghost regenerated in quad 4'
+                    return None
+                else:
+                    return bGCandidates[0]
+        else:
+            if len(bgList) > 1:
+                print 'Error: multiple identical bad ghosts'
+                return None
+            else:
+                return bgList[0]
 
     def getStateNum(self, observedState):
         def dirInd(d):
@@ -382,6 +425,16 @@ class CollectAgent(BaseStudentAgent):
         global previous_state
         global previous_action
         global old_score
+        global badGhost
+        global prevGhostStates
+
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        print 'Bad quad: ' + str(ObservedState.getGhostQuadrant(
+                observedState,badGhost))
+        prevGhostStates = ghostStates
         
         legalActs = [a for a in observedState.getLegalPacmanActions()]
         if (legalActs == [Directions.STOP]):
@@ -415,9 +468,11 @@ class CollectAgent(BaseStudentAgent):
             act = fil_legal[count_lst.index(min(count_lst))]
             previous_action = act
             return act
+
         minDist = None
         minGhost = None
         for g in ghostStates:
+            print g.getFeatures()
             if not (g.getFeatures() == badGhost.getFeatures()).all():
                 dist = self.distancer.getDistance(
                     observedState.getPacmanPosition(), g.getPosition())
