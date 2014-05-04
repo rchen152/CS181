@@ -18,11 +18,12 @@ NUM_GHOSTS = 4
 AVG_CLASS_JUICE =[28.867748179685883, 52.257299401447447, 153.57566648602614,
                   17.2900555038538, 0,0]
 
-BG_RANGE = 4
-GG_RANGE = 3
-CAP_RANGE = 2
+BG_RANGE = 2
+GG_RANGE = 1
+CAP_RANGE = 1
 NUM_DIRS = 4
 NUM_MOVES = NUM_DIRS + 1
+HEUR_BG_RANGE = 4
 
 badGhost = None
 prevGhostStates = []
@@ -31,9 +32,9 @@ prevGhostStates = []
 goodGhostInfo = (direction,distance)
 (NOT USED) wallInfo = [isPresent,isPresent,isPresent,isPresent]
 goodCapInfo = (direction,distance)
-dim = (numDirs*bgRange*2 + 1, numDirs*ggRange + 1, numDirs*capRange + 1)'''
+dim = ((numDirs*bgRange + 1)*2, numDirs*ggRange + 1, numDirs*capRange + 1)'''
 
-num_states = 3861
+num_states = 450
 num_actions = 4
 sa = open('ExampleTeam/pickled_sa.p','r')
 sa_ds = pickle.load(sa)
@@ -198,7 +199,7 @@ class CoequalizerAgent(BaseStudentAgent):
             else:
                 return rDir
         else:
-            if bgDist > BG_RANGE:
+            if bgDist > HEUR_BG_RANGE:
                 goodGhosts = self.getGoodGhostInfo(observedState)
                 g = min(goodGhosts)
                 dirs = self.getClosestDirs(
@@ -291,8 +292,7 @@ class CoequalizerAgent(BaseStudentAgent):
         if (s == 0 or sa_ds[s]['count'] <= MIN_STATE_VISITS):
             return self.chooseActionByHeuristic(observedState)        
         else:
-            return self.enough_visits(observedState)'''
-    
+            return self.enough_visits(observedState)'''    
 
 class CollectAgent(CoequalizerAgent):
 
@@ -301,20 +301,21 @@ class CollectAgent(CoequalizerAgent):
         pacDirs = observedState.getLegalPacmanActions()
 
         # Compute bad ghost state
-        bgInd = -1
+        bgInd = -2
+        bgScared = 0
+        if observedState.scaredGhostPresent():
+            bgScared = 1
+        if bgScared:
+            bgInd = -1
         if badGhost:
             # Get distance to bad ghost
             bgPos = badGhost.getPosition()
             bgDist = self.distancer.getDistance(pacPos, bgPos)
-            bgScared = 0
             # If bad ghost in range, get closest direction to it
             if 0 < bgDist and bgDist <= BG_RANGE:
                 bgDirs = self.getClosestDirs(
                     observedState, pacDirs, bgPos, bgDist)
                 if bgDirs:
-                    scared = observedState.scaredGhostPresent()
-                    if scared:
-                        bgScared = 1
                     # Get a number from the state
                     bgInd = ((2*BG_RANGE*dir_dict[bgDirs[0]]) +
                              (2*(bgDist - 1)) + bgScared)
@@ -356,7 +357,7 @@ class CollectAgent(CoequalizerAgent):
                 gcInd = (CAP_RANGE * dir_dict[gcDirs[0]]) + (gcDist-1)
         
         # Get overall state
-        bgInd += 1
+        bgInd += 2
         ggInd += 1
         gcInd += 1
         numGGStates = NUM_DIRS*GG_RANGE + 1
