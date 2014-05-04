@@ -384,7 +384,7 @@ class CollectAgent(BaseStudentAgent):
         global old_score
         
         legalActs = [a for a in observedState.getLegalPacmanActions()]
-        if (legalActs == Directions.STOP):
+        if (legalActs == [Directions.STOP]):
             print "error you are trapped by four walls"
             previous_state = observedState
             old_score = observedState.getScore()
