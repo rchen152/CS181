@@ -11,7 +11,6 @@ from util import random, manhattanDistance, Counter, chooseFromDistribution
 import pickle
 import classify as cfy
 
-
 GAME_LEN = 1000
 BAD_QUAD = 4
 NUM_GHOSTS = 4
@@ -200,7 +199,8 @@ class CoequalizerAgent(BaseStudentAgent):
         posBadGhosts = self.posBadGhosts(ghostStates,observedState)
         numPosGhosts = len(posBadGhosts)
 
-        if(GAME_LEN == observedState.getNumMovesLeft()):
+        if self.firstMove:
+            self.firstMove = False
             if numPosGhosts != 1:
                 print 'Error: wrong number of bad ghosts'
                 return None
@@ -258,7 +258,8 @@ class CollectAgent(BaseStudentAgent):
         posBadGhosts = self.posBadGhosts(ghostStates,observedState)
         numPosGhosts = len(posBadGhosts)
 
-        if(GAME_LEN == observedState.getNumMovesLeft()):
+        if self.firstMove:
+            self.firstMove = False
             if numPosGhosts != 1:
                 print 'Error: wrong number of bad ghosts'
                 return None
@@ -407,12 +408,6 @@ class CollectAgent(BaseStudentAgent):
         global old_score
         global badGhost
         global prevGhostStates
-
-        ghostStates = observedState.getGhostStates()
-        if len(ghostStates) != NUM_GHOSTS:
-            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
-        badGhost = self.updateBadGhost(observedState)
-        prevGhostStates = ghostStates
         
         legalActs = [a for a in observedState.getLegalPacmanActions()]
         if (legalActs == [Directions.STOP]):
@@ -427,10 +422,14 @@ class CollectAgent(BaseStudentAgent):
             sa_file.close()
             print sa_ds
             
-
-        if (observedState.getNumMovesLeft() != GAME_LEN):
+        if not self.firstMove:
             self.explore(observedState)        
 
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        prevGhostStates = ghostStates
     
         fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
         s = self.getStateNum(observedState)
