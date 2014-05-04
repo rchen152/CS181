@@ -40,6 +40,10 @@ sa_ds = pickle.load(open('ExampleTeam/pickled_sa.p','r'))
 
 dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
 
+#previous_state = 0
+#previous_action = Directions.NORTH
+#previous_score = 0
+
 class BaseStudentAgent(object):
     """Superclass of agents students will write"""
 
@@ -232,6 +236,7 @@ class CoequalizerAgent(BaseStudentAgent):
         else:
             if len(bgList) > 1:
                 print 'Error: multiple identical bad ghosts'
+                return None
             else:
                 return bgList[0]
 
@@ -361,7 +366,7 @@ class CollectAgent(BaseStudentAgent):
         global previous_action
         global old_score
 
-        old_s = self.getStateNum(previous_ghost_state)
+        old_s = self.getStateNum(previous_state)
         new_s = self.getStateNum(observedState)
         
         
@@ -375,6 +380,7 @@ class CollectAgent(BaseStudentAgent):
         sa_ds[old_s * 4 + dir_dict[previous_action]]['total_reward']+= (old_score - observedState.getScore())
         
     def chooseAction(self,observedState):
+        global sa_ds
         global previous_state
         global previous_action
         global old_score
@@ -389,20 +395,24 @@ class CollectAgent(BaseStudentAgent):
         if (observedState.getNumMovesLeft == 1):
             pickle.dump(sa_ds,open("pickled_sa.p","w"))
 
-        if (observedState.getNumMovesLeft != GAME_LEN):
+        if (observedState.getNumMovesLeft() != GAME_LEN):
             self.explore(observedState)        
             
-        fil_legal = legalActs.remove(Directions.STOP)
-        s = self.getNumState(observedState)
-        count_lst = [sa_ds[4*s + dir_dict[fil_legal[i]]]['count'] for i in range(len(fil_legal))]
+        fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
+        s = self.getStateNum(observedState)
+
+        print sa_ds
+        count_lst = [None]*len(fil_legal)
+        for i in range(len(fil_legal)):
+            dir_num = dir_dict[fil_legal[i]]
+
+            count_lst[i] = sa_ds[4*s + dir_num]['count'] 
+                         
         previous_state = observedState
         old_score = observedState.getScore()
         
         act = fil_legal[count_lst.index(min(count_lst))]
         previous_action = act
-
-        if(s == 0):
-            
 
         return act
 
