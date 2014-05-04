@@ -352,7 +352,82 @@ class CoSecondAgent(CoequalizerAgent):
             return self.enough_visits(observedState)
     
 
+class CollectAgent(CoequalizerAgent):
+    def chooseAction(self,observedState):
+        global sa_ds
+        global previous_state
+        global previous_action
+        global old_score
+        global badGhost
+        global prevGhostStates
 
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        prevGhostStates = ghostStates
+        
+        legalActs = [a for a in observedState.getLegalPacmanActions()]
+        if (legalActs == [Directions.STOP]):
+            print "error you are trapped by four walls"
+            previous_state = observedState
+            old_score = observedState.getScore()
+            return Directions.STOP
+
+        if (observedState.getNumMovesLeft() == 1):
+            sa_file = open("ExampleTeam/pickled_sa.p","w")
+            pickle.dump(sa_ds,sa_file)
+            sa_file.close()
+            print sa_ds
+            
+
+        if (observedState.getNumMovesLeft() != GAME_LEN):
+            self.explore(observedState)        
+
+    
+        fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
+        s = self.getStateNum(observedState)
+
+        count_lst = [None]*len(fil_legal)
+        for i in range(len(fil_legal)):
+            dir_num = dir_dict[fil_legal[i]]
+
+            count_lst[i] = sa_ds[4*s + dir_num]['count'] 
+
+        previous_state = observedState
+        old_score = observedState.getScore()
+
+        state = self.getStateNum(observedState)
+        if state != 0:
+            act = fil_legal[count_lst.index(min(count_lst))]
+            previous_action = act
+            return act
+
+        minDist = None
+        minGhost = None
+        ghostStates = observedState.getGhostStates()
+        for g in ghostStates:
+            if not (g.getFeatures() == badGhost.getFeatures()).all():
+                dist = self.distancer.getDistance(
+                    observedState.getPacmanPosition(), g.getPosition())
+                if not minGhost or dist < minDist:
+                    minDist = dist
+                    minGhost = g
+
+        posDirs = observedState.getLegalPacmanActions()
+        for d in posDirs:
+            nextPos = observedState.pacmanFuturePosition([d])
+            if self.distancer.getDistance(nextPos,
+                                          minGhost.getPosition()) < minDist:
+                previous_action = d
+                return d
+
+#in case there are no possible directions which get him closer, which doesn't make sense
+        act = random.choice([d for d in observedState.getLegalPacmanActions()
+                              if not d == Directions.STOP])
+        previous_action = act
+        print "hi"+ str(previous_action)
+        return act
     
 class FuturePosAgent(BaseStudentAgent):
     def chooseAction(self, observedState):
