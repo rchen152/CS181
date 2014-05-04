@@ -49,9 +49,9 @@ dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.W
 #previous_action = Directions.NORTH
 #previous_score = 0
 
-value_mat_file = open('ExampleTeam/value_matrix.p','r')
+'''value_mat_file = open('ExampleTeam/value_matrix.p','r')
 the_V = pickle.load(value_mat_file)
-value_mat_file.close()
+value_mat_file.close()'''
 
 MIN_STATE_VISITS = 5
 BAD_GHOST_DIST = 5
@@ -258,9 +258,13 @@ class CoequalizerAgent(BaseStudentAgent):
         bgPos = badGhost.getPosition()
         bgDist = self.distancer.getDistance(pacPos, bgPos)
         if observedState.scaredGhostPresent():
-            return self.getClosestDirs(
+            dirs = self.getClosestDirs(
                 observedState, pacDirs, bgPos, bgDist)[0]
-            # TODO in ties, go in direction of (good?) capsule
+            if dirs:
+                # TODO in ties, go in direction of (good?) capsule
+                return dirs[0]
+            else:
+                return rDir
         else:
             if bgDist > BG_RANGE:
                 goodGhosts = self.getGoodGhostInfo(observedState)
@@ -307,7 +311,7 @@ class CoequalizerAgent(BaseStudentAgent):
         print 'State: ' + str(self.getStateNum(observedState))
         return self.chooseActionByHeuristic(observedState)
 
-class CoSecondAgent(CoequalizerAgent):
+'''class CoSecondAgent(CoequalizerAgent):
     
     def enough_visits(self,observedState):
         global the_V
@@ -356,7 +360,7 @@ class CoSecondAgent(CoequalizerAgent):
         if (s == 0 or sa_ds[s]['count'] <= MIN_STATE_VISITS):
             return self.chooseActionByHeuristic(observedState)        
         else:
-            return self.enough_visits(observedState)
+            return self.enough_visits(observedState)'''
     
 
 
