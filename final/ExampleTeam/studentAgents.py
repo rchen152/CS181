@@ -135,6 +135,167 @@ class CoequalizerAgent(BaseStudentAgent):
         return [(self.distancer.getDistance(pacPos,caps[i][0]),caps[i][0])
                 for i in range(len(caps)) if capClasses[i]]
 
+    def posBadGhosts(self, ghostState, observedState):
+        return [g for g in ghostState if ObservedState.getGhostQuadrant(
+                observedState,g) == BAD_QUAD]
+
+    def updateBadGhost(self, observedState):
+        global badGhost
+        global prevGhostStates
+        
+        ghostStates = observedState.getGhostStates()
+        posBadGhosts = self.posBadGhosts(ghostStates,observedState)
+        numPosGhosts = len(posBadGhosts)
+
+        if self.firstMove:
+            self.firstMove = False
+            if numPosGhosts != 1:
+                print 'Error: wrong number of bad ghosts'
+                return None
+            else:
+                return posBadGhosts[0]
+
+        bgList = [g for g in ghostStates
+                  if (g.getFeatures() == badGhost.getFeatures()).all()]
+        if not bgList:
+            if numPosGhosts < 1:
+                print 'Error: no quad 4 ghosts'
+                return None
+            elif numPosGhosts == 1:
+                return posBadGhosts[0]
+            else:
+                bGCandidates = [g for g in posBadGhosts if not
+                                [p for p in prevGhostStates if
+                                 (g.getFeatures() == p.getFeatures()).all()]]
+                if len(bGCandidates) != 1:
+                    print 'Error: not exactly one ghost regenerated in quad 4'
+                    return None
+                else:
+                    return bGCandidates[0]
+        else:
+            if len(bgList) > 1:
+                print 'Error: multiple identical bad ghosts'
+                return None
+            else:
+                return bgList[0]
+
+    def chooseActionByHeuristic(self, observedState):
+        global badGhost
+
+        rDir = random.choice([d for d in observedState.getLegalPacmanActions()
+                              if d != Directions.STOP])
+        pacPos = observedState.getPacmanPosition()
+        pacDirs = observedState.getLegalPacmanActions()
+
+        bgPos = badGhost.getPosition()
+        bgDist = self.distancer.getDistance(pacPos, bgPos)
+        if observedState.scaredGhostPresent():
+            dirs = self.getClosestDirs(
+                observedState, pacDirs, bgPos, bgDist)
+            if dirs:
+                # TODO in ties, go in direction of (good?) capsule
+                return dirs[0]
+            else:
+                return rDir
+        else:
+            if bgDist > BG_RANGE:
+                goodGhosts = self.getGoodGhostInfo(observedState)
+                g = min(goodGhosts)
+                dirs = self.getClosestDirs(
+                    observedState, pacDirs, g[1].getPosition(), g[0])
+                # TODO in ties?
+                if dirs:
+                    return dirs[0]
+                else:
+                    return rDir
+            else:
+                goodCaps = self.getGoodCapInfo(observedState)
+                goodCaps = [c for c in goodCaps
+                            if c[0] < self.distancer.getDistance(c[1],bgPos)]
+                if goodCaps:
+                    c = min(goodCaps)
+                    # TODO tie in distance to caps - go to cap closer to BG
+                    # TODO tie in direction to closest cap - avoid ghost
+                    dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
+                else:
+                    # TODO in tie - go toward bad capsule
+                    dirs = self.getFarthestDirs(
+                        observedState, pacDirs, bgPos, bgDist)
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
+
+    def chooseAction(self, observedState):
+        global badGhost
+        global prevGhostStates
+
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        prevGhostStates = ghostStates
+
+        return self.chooseActionByHeuristic(observedState)
+
+'''class CoSecondAgent(CoequalizerAgent):
+    
+    def enough_visits(self,observedState):
+        global the_V
+        remaining_time = observedState.getNumMovesLeft()
+        legalActs = [a for a in observedState.getLegalPacmanActions()]
+        fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
+        total_reward = []         
+        s = self.getStateNum(observedState)
+        for i in range(len(fil_legal)):
+            x = fil_legal[i]
+        # calculate the award for (s, x)
+            if (sa_ds[s * 4 + dir_dict[x]]['count'] == 0):
+                my_award = 0
+            else:
+                my_award = float(sa_ds[s * 4 + dir_dict[x]]['total_reward'])/sa_ds[s * 4 + dir_dict[x]]['count']
+        # calculate expected vs
+            expected_vs = 0
+            for new_state in sa_ds[s * 4 + dir_dict[x]]:
+                if (new_state != 'count' and new_state != 'total_reward'):
+                    my_p = float(sa_ds[s * 4 + dir_dict[x]][new_state])/sa_ds[s * 4 + dir_dict[x]]['count'] 
+                # Not sure if this index is correct
+                    if (remaining_time <1):
+                        print "no time remaining error"
+                        return Directions.STOP
+
+                    expected_vs += my_p * the_V[remaining_time -1][new_state]
+            net_reward = my_award + expected_vs
+            total_reward.append(net_reward)
+    # Then choose the x with maximum net_reward to return
+        return fil_legal[total_reward.index(max(total_reward))]
+
+
+    def chooseAction(self, observedState):
+        global badGhost
+        global prevGhostStates
+
+        ghostStates = observedState.getGhostStates()
+        if len(ghostStates) != NUM_GHOSTS:
+            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+        badGhost = self.updateBadGhost(observedState)
+        prevGhostStates = ghostStates
+
+        # print 'State: ' + str(self.getStateNum(observedState))
+
+        s = self.getStateNum(observedState)
+        if (s == 0 or sa_ds[s]['count'] <= MIN_STATE_VISITS):
+            return self.chooseActionByHeuristic(observedState)        
+        else:
+            return self.enough_visits(observedState)'''
+    
+
+class CollectAgent(CoequalizerAgent):
+
     def getStateNum(self, observedState):
         pacPos = observedState.getPacmanPosition()
         pacDirs = observedState.getLegalPacmanActions()
@@ -203,167 +364,6 @@ class CoequalizerAgent(BaseStudentAgent):
         return ((bgInd * numGGStates * numGCStates) +
                 (ggInd * numGCStates) + gcInd)
 
-    def posBadGhosts(self, ghostState, observedState):
-        return [g for g in ghostState if ObservedState.getGhostQuadrant(
-                observedState,g) == BAD_QUAD]
-
-    def updateBadGhost(self, observedState):
-        global badGhost
-        global prevGhostStates
-        
-        ghostStates = observedState.getGhostStates()
-        posBadGhosts = self.posBadGhosts(ghostStates,observedState)
-        numPosGhosts = len(posBadGhosts)
-
-        if self.firstMove:
-            self.firstMove = False
-            if numPosGhosts != 1:
-                print 'Error: wrong number of bad ghosts'
-                return None
-            else:
-                return posBadGhosts[0]
-
-        bgList = [g for g in ghostStates
-                  if (g.getFeatures() == badGhost.getFeatures()).all()]
-        if not bgList:
-            if numPosGhosts < 1:
-                print 'Error: no quad 4 ghosts'
-                return None
-            elif numPosGhosts == 1:
-                return posBadGhosts[0]
-            else:
-                bGCandidates = [g for g in posBadGhosts if not
-                                [p for p in prevGhostStates if
-                                 (g.getFeatures() == p.getFeatures()).all()]]
-                if len(bGCandidates) != 1:
-                    print 'Error: not exactly one ghost regenerated in quad 4'
-                    return None
-                else:
-                    return bGCandidates[0]
-        else:
-            if len(bgList) > 1:
-                print 'Error: multiple identical bad ghosts'
-                return None
-            else:
-                return bgList[0]
-
-    def chooseActionByHeuristic(self, observedState):
-        global badGhost
-
-        rDir = random.choice([d for d in observedState.getLegalPacmanActions()
-                              if d != Directions.STOP])
-        pacPos = observedState.getPacmanPosition()
-        pacDirs = observedState.getLegalPacmanActions()
-
-        bgPos = badGhost.getPosition()
-        bgDist = self.distancer.getDistance(pacPos, bgPos)
-        if observedState.scaredGhostPresent():
-            dirs = self.getClosestDirs(
-                observedState, pacDirs, bgPos, bgDist)[0]
-            if dirs:
-                # TODO in ties, go in direction of (good?) capsule
-                return dirs[0]
-            else:
-                return rDir
-        else:
-            if bgDist > BG_RANGE:
-                goodGhosts = self.getGoodGhostInfo(observedState)
-                g = min(goodGhosts)
-                dirs = self.getClosestDirs(
-                    observedState, pacDirs, g[1].getPosition(), g[0])
-                # TODO in ties?
-                if dirs:
-                    return dirs[0]
-                else:
-                    return rDir
-            else:
-                goodCaps = self.getGoodCapInfo(observedState)
-                goodCaps = [c for c in goodCaps
-                            if c[0] < self.distancer.getDistance(c[1],bgPos)]
-                if goodCaps:
-                    c = min(goodCaps)
-                    # TODO tie in distance to caps - go to cap closer to BG
-                    # TODO tie in direction to closest cap - avoid ghost
-                    dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
-                    if dirs:
-                        return dirs[0]
-                    else:
-                        return rDir
-                else:
-                    # TODO in tie - go toward bad capsule
-                    dirs = self.getFarthestDirs(
-                        observedState, pacDirs, bgPos, bgDist)
-                    if dirs:
-                        return dirs[0]
-                    else:
-                        return rDir
-
-    def chooseAction(self, observedState):
-        global badGhost
-        global prevGhostStates
-
-        ghostStates = observedState.getGhostStates()
-        if len(ghostStates) != NUM_GHOSTS:
-            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
-        badGhost = self.updateBadGhost(observedState)
-        prevGhostStates = ghostStates
-
-        print 'State: ' + str(self.getStateNum(observedState))
-        return self.chooseActionByHeuristic(observedState)
-
-'''class CoSecondAgent(CoequalizerAgent):
-    
-    def enough_visits(self,observedState):
-        global the_V
-        remaining_time = observedState.getNumMovesLeft()
-        legalActs = [a for a in observedState.getLegalPacmanActions()]
-        fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
-        total_reward = []         
-        s = self.getStateNum(observedState)
-        for i in range(len(fil_legal)):
-            x = fil_legal[i]
-        # calculate the award for (s, x)
-            if (sa_ds[s * 4 + dir_dict[x]]['count'] == 0):
-                my_award = 0
-            else:
-                my_award = float(sa_ds[s * 4 + dir_dict[x]]['total_reward'])/sa_ds[s * 4 + dir_dict[x]]['count']
-        # calculate expected vs
-            expected_vs = 0
-            for new_state in sa_ds[s * 4 + dir_dict[x]]:
-                if (new_state != 'count' and new_state != 'total_reward'):
-                    my_p = float(sa_ds[s * 4 + dir_dict[x]][new_state])/sa_ds[s * 4 + dir_dict[x]]['count'] 
-                # Not sure if this index is correct
-                    if (remaining_time <1):
-                        print "no time remaining error"
-                        return Directions.STOP
-
-                    expected_vs += my_p * the_V[remaining_time -1][new_state]
-            net_reward = my_award + expected_vs
-            total_reward.append(net_reward)
-    # Then choose the x with maximum net_reward to return
-        return fil_legal[total_reward.index(max(total_reward))]
-
-
-    def chooseAction(self, observedState):
-        global badGhost
-        global prevGhostStates
-
-        ghostStates = observedState.getGhostStates()
-        if len(ghostStates) != NUM_GHOSTS:
-            print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
-        badGhost = self.updateBadGhost(observedState)
-        prevGhostStates = ghostStates
-
-        # print 'State: ' + str(self.getStateNum(observedState))
-
-        s = self.getStateNum(observedState)
-        if (s == 0 or sa_ds[s]['count'] <= MIN_STATE_VISITS):
-            return self.chooseActionByHeuristic(observedState)        
-        else:
-            return self.enough_visits(observedState)'''
-    
-
-class CollectAgent(CoequalizerAgent):
     def chooseAction(self,observedState):
         global sa_ds
         global previous_state
