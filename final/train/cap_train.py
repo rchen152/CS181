@@ -14,11 +14,11 @@ all_data = pca.transform(train_data)
 centers,_ = kmeans(all_data,3)
 
 def do_pickle():
-    fPCA = open('pca.pickle', 'w')
+    fPCA = open('pca.pkl', 'w')
     pickle.dump(pca, fPCA)
     fPCA.close()
 
-    fKMeans = open('kmeans_centers.pickle', 'w')
+    fKMeans = open('kmeans_centers.pkl', 'w')
     pickle.dump(centers, fKMeans)
     fKMeans.close()
 
