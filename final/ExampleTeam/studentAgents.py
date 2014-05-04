@@ -95,18 +95,6 @@ class CoequalizerAgent(BaseStudentAgent):
         # learned_params = np.load("myparams.npy") 
         
     def getStateNum(self, observedState):
-        def dirInd(d):
-            if d == Directions.STOP:
-                return 4
-            elif d == Directions.NORTH:
-                return 3
-            elif d == Directions.SOUTH:
-                return 2
-            elif d == Directions.EAST:
-                return 1
-            else:
-                return 0
-
         pacPos = observedState.getPacmanPosition()
 
         # Compute bad ghost state
@@ -129,7 +117,7 @@ class CoequalizerAgent(BaseStudentAgent):
                         if scared:
                             bgScared = 1
                         # Get a number from the state
-                        bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                        bgInd = ((2*BG_RANGE*dir_dict[bgDir]) +
                                  (2*(bgDist - 1)) + bgScared)
                         break
         # Compute good ghost state
@@ -159,7 +147,7 @@ class CoequalizerAgent(BaseStudentAgent):
                 if self.distancer.getDistance(nextPos, juicyPos) < juicyDist:
                     juicyDir = d
                     # Get a number from the state
-                    ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+                    ggInd = (GG_RANGE * dir_dict[juicyDir]) + (juicyDist-1)
                     break       
  
         # Compute good capsule state
@@ -185,7 +173,7 @@ class CoequalizerAgent(BaseStudentAgent):
                 if self.distancer.getDistance(nextPos, gcPos) < gcDist:
                     gcDir = d
                     # Get a number from the state
-                    gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
+                    gcInd = (CAP_RANGE * dir_dict[gcDir]) + (gcDist-1)
                     break
         
         # Get overall state
@@ -300,18 +288,6 @@ class CollectAgent(BaseStudentAgent):
                 return bgList[0]
 
     def getStateNum(self, observedState):
-        def dirInd(d):
-            if d == Directions.STOP:
-                return 4
-            elif d == Directions.NORTH:
-                return 3
-            elif d == Directions.SOUTH:
-                return 2
-            elif d == Directions.EAST:
-                return 1
-            else:
-                return 0
-
         pacPos = observedState.getPacmanPosition()
 
         # Compute bad ghost state
@@ -335,7 +311,7 @@ class CollectAgent(BaseStudentAgent):
                 if scared:
                     bgScared = 1
                 # Get a number from the state
-                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                bgInd = ((2*BG_RANGE*dir_dict[bgDir]) +
                          (2*(bgDist - 1)) + bgScared)
 
         # Compute good ghost state
@@ -366,7 +342,7 @@ class CollectAgent(BaseStudentAgent):
                     juicyDir = d
                     break
             # Get a number from the state
-            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+            ggInd = (GG_RANGE * dir_dict[juicyDir]) + (juicyDist-1)
         
         # Compute good capsule state
         gcInd = -1
@@ -392,7 +368,7 @@ class CollectAgent(BaseStudentAgent):
                     gcDir = d
                     break
             # Get a number from the state
-            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
+            gcInd = (CAP_RANGE * dir_dict[gcDir]) + (gcDist-1)
         
         # Get overall state
         bgInd += 1
