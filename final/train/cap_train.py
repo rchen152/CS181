@@ -11,19 +11,19 @@ train_data = np.loadtxt(MIXED_CAPS)
 pca = PCA(n_components = 2)
 pca.fit(train_data)
 all_data = pca.transform(train_data)
-good_data = pca.transform(np.loadtxt(GOOD_CAPS))
 centers,_ = kmeans(all_data,3)
 
 def do_pickle():
-    fPCA = open('pca.pickle', 'w')
+    fPCA = open('pca.pkl', 'w')
     pickle.dump(pca, fPCA)
     fPCA.close()
 
-    fKMeans = open('kmeans_centers.pickle', 'w')
+    fKMeans = open('kmeans_centers.pkl', 'w')
     pickle.dump(centers, fKMeans)
     fKMeans.close()
 
 def plot_pca():
+    good_data = pca.transform(np.loadtxt(GOOD_CAPS))
     x1 = all_data[:,0]
     y1 = all_data[:,1]
     x2 = good_data[:,0]
