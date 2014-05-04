@@ -2,6 +2,12 @@ import cPickle as pickle
 import numpy as np
 from scipy.cluster.vq import kmeans, vq
 
+# TODO change the path to the pickled decision tree
+fTree = open('train/tree.pkl', 'r')
+tree = pickle.load(fTree)
+fTree.close()
+GOOD_FEATS = [0,1,2,3,4,10,11,12]
+
 fPCA = open('train/pca.pkl', 'r')
 pca = pickle.load(fPCA)
 fPCA.close()
@@ -19,3 +25,6 @@ def capClassify(data):
     data = pca.transform(data)
     cats,_ = vq(data,centers)
     return [1 if cat==good_index else 0 for cat in cats]
+
+def ghostClassify(data):
+    return [int(pred) for pred in tree.predict([d[GOOD_FEATS] for d in data])]

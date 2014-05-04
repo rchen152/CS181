@@ -64,7 +64,7 @@ def readCommand( argv ):
     parser.add_option('-q', '--quietTextGraphics', action='store_true', dest='quietGraphics',
                       help='Generate minimal output and no graphics', default=False)
     parser.add_option('-m', '--maxMoves', dest='maxMoves', type='int',
-                      help=default('the maximum number of moves in a game'), default=-1)
+                      help=default('the maximum number of moves in a game'), default=1000)
     parser.add_option('-z', '--zoom', type='float', dest='zoom',
                       help=default('Zoom the size of the graphics window'), default=1.0)
     parser.add_option('-t', '--frameTime', dest='frameTime', type='float',
