@@ -20,8 +20,7 @@ test = test_matrix[:,good_feats]
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(mat,cats)
 
-
-pickle.dump(clf,open("pickled_tree_101_200.p","w"))
+pickle.dump(clf,open("tree.pkl","w"))
 preds = clf.predict(test)
 print preds
 
