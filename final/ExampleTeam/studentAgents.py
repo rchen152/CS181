@@ -36,7 +36,7 @@ dim = ((numDirs*bgRange + 1)*2, numDirs*ggRange + 1, numDirs*capRange + 1)'''
 
 num_states = 450
 num_actions = 4
-sa = open('ExampleTeam/pickled_sa.p','r')
+sa = open('ExampleTeam/small_arr.p','r')
 sa_ds = pickle.load(sa)
 sa.close()
 
@@ -401,7 +401,7 @@ class CollectAgent(CoequalizerAgent):
             return Directions.STOP
 
         if (observedState.getNumMovesLeft() == 1):
-            sa_file = open("ExampleTeam/pickled_sa.p","w")
+            sa_file = open("ExampleTeam/small_arr.p","w")
             pickle.dump(sa_ds,sa_file)
             sa_file.close()
             print sa_ds
