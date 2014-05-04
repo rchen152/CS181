@@ -36,7 +36,9 @@ dim = (numDirs*bgRange*2 + 1, numDirs*ggRange + 1, numDirs*capRange + 1)'''
 
 num_states = 3861
 num_actions = 4
-sa_ds = pickle.load(open('ExampleTeam/pickled_sa.p','r'))
+sa = open('ExampleTeam/pickled_sa.p','r')
+sa_ds = pickle.load(sa)
+sa.close()
 
 dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
 
@@ -443,8 +445,11 @@ class CollectAgent(BaseStudentAgent):
             old_score = observedState.getScore()
             return Directions.STOP
 
-        if (observedState.getNumMovesLeft == 1):
-            pickle.dump(sa_ds,open("pickled_sa.p","w"))
+        if (observedState.getNumMovesLeft() == 1):
+            sa_file = open("ExampleTeam/pickled_sa.p","w")
+            pickle.dump(sa_ds,sa_file)
+            sa_file.close()
+            
 
         if (observedState.getNumMovesLeft() != GAME_LEN):
             self.explore(observedState)        
@@ -472,7 +477,6 @@ class CollectAgent(BaseStudentAgent):
         minDist = None
         minGhost = None
         for g in ghostStates:
-            print g.getFeatures()
             if not (g.getFeatures() == badGhost.getFeatures()).all():
                 dist = self.distancer.getDistance(
                     observedState.getPacmanPosition(), g.getPosition())
