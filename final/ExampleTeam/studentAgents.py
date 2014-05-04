@@ -11,7 +11,6 @@ from util import random, manhattanDistance, Counter, chooseFromDistribution
 import pickle
 import classify as cfy
 
-GAME_LEN = 1000
 BAD_QUAD = 4
 NUM_GHOSTS = 4
 
@@ -33,9 +32,9 @@ goodGhostInfo = (direction,distance)
 goodCapInfo = (direction,distance)
 dim = (numDirs*bgRange*2 + 1, numDirs*ggRange + 1, numDirs*capRange + 1)'''
 
-num_states = 3861
+num_states = 450
 num_actions = 4
-sa = open('ExampleTeam/pickled_sa.p','r')
+sa = open('ExampleTeam/small_arr.p','r')
 sa_ds = pickle.load(sa)
 sa.close()
 
@@ -93,6 +92,7 @@ class CoequalizerAgent(BaseStudentAgent):
         pass # you probably won't need this, but just in case
     
     def registerInitialState(self, gameState):
+        global max_moves = gameState.maxMoves
         """
         Do any necessary initialization
         """
@@ -360,13 +360,16 @@ class CollectAgent(CoequalizerAgent):
         global old_score
         global badGhost
         global prevGhostStates
+        global max_moves
 
         ghostStates = observedState.getGhostStates()
         if len(ghostStates) != NUM_GHOSTS:
             print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
+
+        # print 'State: ' + str(self.getStateNum(observedState))        
         badGhost = self.updateBadGhost(observedState)
         prevGhostStates = ghostStates
-        
+
         legalActs = [a for a in observedState.getLegalPacmanActions()]
         if (legalActs == [Directions.STOP]):
             print "error you are trapped by four walls"
@@ -375,53 +378,38 @@ class CollectAgent(CoequalizerAgent):
             return Directions.STOP
 
         if (observedState.getNumMovesLeft() == 1):
-            sa_file = open("ExampleTeam/pickled_sa.p","w")
+            sa_file = open("ExampleTeam/small_arr.p","w")
             pickle.dump(sa_ds,sa_file)
             sa_file.close()
             print sa_ds
-            
 
-        if (observedState.getNumMovesLeft() != GAME_LEN):
+        if (observedState.getNumMovesLeft() != max_moves):
             self.explore(observedState)        
-
-    
-        fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
-        s = self.getStateNum(observedState)
-
-        count_lst = [None]*len(fil_legal)
-        for i in range(len(fil_legal)):
-            dir_num = dir_dict[fil_legal[i]]
-
-            count_lst[i] = sa_ds[4*s + dir_num]['count'] 
 
         previous_state = observedState
         old_score = observedState.getScore()
 
         state = self.getStateNum(observedState)
         if state != 0:
+            fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
+            s = self.getStateNum(observedState)
+
+            count_lst = [None]*len(fil_legal)
+            for i in range(len(fil_legal)):
+                dir_num = dir_dict[fil_legal[i]]
+                count_lst[i] = sa_ds[4*s + dir_num]['count'] 
+
             act = fil_legal[count_lst.index(min(count_lst))]
             previous_action = act
             return act
 
-        minDist = None
-        minGhost = None
-        ghostStates = observedState.getGhostStates()
-        for g in ghostStates:
-            if not (g.getFeatures() == badGhost.getFeatures()).all():
-                dist = self.distancer.getDistance(
-                    observedState.getPacmanPosition(), g.getPosition())
-                if not minGhost or dist < minDist:
-                    minDist = dist
-                    minGhost = g
+        act =  self.chooseActionByHeuristic(observedState)
+        previous_action = act
+        return act
+        
 
-        posDirs = observedState.getLegalPacmanActions()
-        for d in posDirs:
-            nextPos = observedState.pacmanFuturePosition([d])
-            if self.distancer.getDistance(nextPos,
-                                          minGhost.getPosition()) < minDist:
-                previous_action = d
-                return d
 
+    
 #in case there are no possible directions which get him closer, which doesn't make sense
         act = random.choice([d for d in observedState.getLegalPacmanActions()
                               if not d == Directions.STOP])
