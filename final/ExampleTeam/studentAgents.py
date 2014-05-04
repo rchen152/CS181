@@ -40,6 +40,8 @@ sa = open('ExampleTeam/pickled_sa.p','r')
 sa_ds = pickle.load(sa)
 sa.close()
 
+#print len(filter(lambda x: len(x) !=2 , sa_ds))
+
 dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
 
 #previous_state = 0
@@ -279,7 +281,7 @@ class CollectAgent(BaseStudentAgent):
                     print 'Error: not exactly one ghost regenerated in quad 4'
                     return None
                 else:
-                    return bGCandidates[0]
+                   return bGCandidates[0]
         else:
             if len(bgList) > 1:
                 print 'Error: multiple identical bad ghosts'
@@ -410,8 +412,6 @@ class CollectAgent(BaseStudentAgent):
         if len(ghostStates) != NUM_GHOSTS:
             print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
         badGhost = self.updateBadGhost(observedState)
-        print 'Bad quad: ' + str(ObservedState.getGhostQuadrant(
-                observedState,badGhost))
         prevGhostStates = ghostStates
         
         legalActs = [a for a in observedState.getLegalPacmanActions()]
@@ -425,6 +425,7 @@ class CollectAgent(BaseStudentAgent):
             sa_file = open("ExampleTeam/pickled_sa.p","w")
             pickle.dump(sa_ds,sa_file)
             sa_file.close()
+            print sa_ds
             
 
         if (observedState.getNumMovesLeft() != GAME_LEN):
@@ -434,7 +435,6 @@ class CollectAgent(BaseStudentAgent):
         fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
         s = self.getStateNum(observedState)
 
-        print sa_ds
         count_lst = [None]*len(fil_legal)
         for i in range(len(fil_legal)):
             dir_num = dir_dict[fil_legal[i]]
@@ -445,7 +445,6 @@ class CollectAgent(BaseStudentAgent):
         old_score = observedState.getScore()
 
         state = self.getStateNum(observedState)
-        print 'State: ' + str(state)
         if state != 0:
             act = fil_legal[count_lst.index(min(count_lst))]
             previous_action = act
