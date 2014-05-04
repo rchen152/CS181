@@ -122,15 +122,14 @@ class CoequalizerAgent(BaseStudentAgent):
                     nextPos = observedState.pacmanFuturePosition([d])
                     if self.distancer.getDistance(nextPos, bgPos) < bgDist:
                         bgDir = d
+                        # Check whether the bad ghost is scared
+                        scared = observedState.scaredGhostPresent()
+                        if scared:
+                            bgScared = 1
+                        # Get a number from the state
+                        bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                                 (2*(bgDist - 1)) + bgScared)
                         break
-                # Check whether the bad ghost is scared
-                scared = observedState.scaredGhostPresent()
-                if scared:
-                    bgScared = 1
-                # Get a number from the state
-                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
-                         (2*(bgDist - 1)) + bgScared)
-
         # Compute good ghost state
         ggInd = -1
         # Get good ghosts in range
@@ -157,10 +156,10 @@ class CoequalizerAgent(BaseStudentAgent):
                 nextPos = observedState.pacmanFuturePosition([d])
                 if self.distancer.getDistance(nextPos, juicyPos) < juicyDist:
                     juicyDir = d
-                    break
-            # Get a number from the state
-            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
-        
+                    # Get a number from the state
+                    ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+                    break       
+ 
         # Compute good capsule state
         gcInd = -1
         # Get all capsules
@@ -183,9 +182,9 @@ class CoequalizerAgent(BaseStudentAgent):
                 nextPos = observedState.pacmanFuturePosition([d])
                 if self.distancer.getDistance(nextPos, gcPos) < gcDist:
                     gcDir = d
+                    # Get a number from the state
+                    gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
                     break
-            # Get a number from the state
-            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
         
         # Get overall state
         bgInd += 1
@@ -248,11 +247,10 @@ class CoequalizerAgent(BaseStudentAgent):
         if len(ghostStates) != NUM_GHOSTS:
             print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
         badGhost = self.updateBadGhost(observedState)
-        print ObservedState.getGhostQuadrant(observedState,badGhost)
+        print 'Bad quad: ' + str(ObservedState.getGhostQuadrant(
+                observedState,badGhost))
         prevGhostStates = ghostStates
-
-        legalActs = observedState.getLegalPacmanActions()
-        return random.choice(legalActs)
+        return random.choice(observedState.getLegalPacmanActions())
     
 class CollectAgent(BaseStudentAgent):
 
@@ -410,12 +408,31 @@ class CollectAgent(BaseStudentAgent):
                          
         previous_state = observedState
         old_score = observedState.getScore()
+
+        state = self.getStateNum(observedState)
+        print 'State: ' + str(state)
+        if state != 0:
+            act = fil_legal[count_lst.index(min(count_lst))]
+            previous_action = act
+            return act
+        minDist = None
+        minGhost = None
+        for g in ghostStates:
+            if not (g.getFeatures() == badGhost.getFeatures()).all():
+                dist = self.distancer.getDistance(
+                    observedState.getPacmanPosition(), g.getPosition())
+                if not minGhost or dist < minDist:
+                    minDist = dist
+                    minGhost = g
+        posDirs = observedState.getLegalPacmanActions()
+        for d in posDirs:
+            nextPos = observedState.pacmanFuturePosition([d])
+            if self.distancer.getDistance(nextPos,
+                                          minGhost.getPosition()) < minDist:
+                return d
+        return random.choice([d for d in observedState.getLegalPacmanActions()
+                              if not d == Directions.STOP])
         
-        act = fil_legal[count_lst.index(min(count_lst))]
-        previous_action = act
-
-        return act
-
 class FuturePosAgent(BaseStudentAgent):
     def chooseAction(self, observedState):
         legalActs = [a for a in observedState.getLegalPacmanActions()]
