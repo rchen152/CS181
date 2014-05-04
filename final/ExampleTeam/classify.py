@@ -3,7 +3,7 @@ import numpy as np
 from scipy.cluster.vq import kmeans, vq
 
 # TODO change the path to the pickled decision tree
-fTree = open('train/tree.pkl', 'r')
+fTree = open('train/pickled_tree_101_200.p', 'r')
 tree = pickle.load(fTree)
 fTree.close()
 GOOD_FEATS = [0,1,2,3,4,10,11,12]
