@@ -453,7 +453,8 @@ class CollectAgent(BaseStudentAgent):
 
         if (observedState.getNumMovesLeft() != GAME_LEN):
             self.explore(observedState)        
-            
+
+    
         fil_legal = filter(lambda x: x != Directions.STOP ,legalActs)
         s = self.getStateNum(observedState)
 
@@ -463,7 +464,7 @@ class CollectAgent(BaseStudentAgent):
             dir_num = dir_dict[fil_legal[i]]
 
             count_lst[i] = sa_ds[4*s + dir_num]['count'] 
-                         
+
         previous_state = observedState
         old_score = observedState.getScore()
 
@@ -484,15 +485,22 @@ class CollectAgent(BaseStudentAgent):
                 if not minGhost or dist < minDist:
                     minDist = dist
                     minGhost = g
+
         posDirs = observedState.getLegalPacmanActions()
         for d in posDirs:
             nextPos = observedState.pacmanFuturePosition([d])
             if self.distancer.getDistance(nextPos,
                                           minGhost.getPosition()) < minDist:
+                previous_action = d
                 return d
-        return random.choice([d for d in observedState.getLegalPacmanActions()
+
+#in case there are no possible directions which get him closer, which doesn't make sense
+        act = random.choice([d for d in observedState.getLegalPacmanActions()
                               if not d == Directions.STOP])
-        
+        previous_action = act
+        print "hi"+ str(previous_action)
+        return act
+
 class FuturePosAgent(BaseStudentAgent):
     def chooseAction(self, observedState):
         legalActs = [a for a in observedState.getLegalPacmanActions()]
