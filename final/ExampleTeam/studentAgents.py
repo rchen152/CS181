@@ -14,6 +14,7 @@ BAD_QUAD = 4
 NUM_GHOSTS = 4
 bad_ghost_vec = np.array([])
 previous_ghost_state = np.array([])
+avg_class_juice =[28.867748179685883, 52.257299401447447, 153.57566648602614, 17.2900555038538, 0,0]
 
 class BaseStudentAgent(object):
     """Superclass of agents students will write"""
@@ -104,6 +105,7 @@ class CoequalizerAgent(BaseStudentAgent):
                 else: return b_g_candidates[0].getFeatures()
         else:
             return bad_ghost_vec
+
     def chooseAction(self, observedState):
         """
         Here, choose pacman's next action based on the current state of the game.
@@ -127,6 +129,7 @@ class CoequalizerAgent(BaseStudentAgent):
         print ObservedState.getGhostQuadrant(observedState,bad_ghost)
         previous_ghost_state = ghost_states
 
+
         pacmanPosition = observedState.getPacmanPosition()
 
 
@@ -148,6 +151,21 @@ class CoequalizerAgent(BaseStudentAgent):
                 best_dist = new_dist
         return best_action
     
+class FuturePosAgent(BaseStudentAgent):
+    def chooseAction(self, observedState):
+        legalActs = [a for a in observedState.getLegalPacmanActions()]
+        g_pos = map(lambda x : x.getPosition(),observedState.getGhostStates())
+        print g_pos
+#        print ObservedState.pacmanFuturePosition(observedState,[Directions.WEST])
+#       print ObservedState.pacmanFuturePosition(observedState,[Directions.WEST,Directions.WEST,Directions.WEST])
+        dir_lst = [Directions.NORTH,Directions.SOUTH,Directions.EAST,Directions.WEST,Directions.STOP]
+        dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
+        fst_g_pos = observedState.getGhostStates()[0].getPosition()
+        response_lst = [ObservedState.ghostFuturePosition(observedState,0,[i]) for i in dir_lst]
+        print response_lst
+        act = random.choice(legalActs)
+        print (act,response_lst[dir_dict[act]])
+        return act                
 
 class DataAgent(BaseStudentAgent):
 
@@ -168,6 +186,7 @@ class DataAgent(BaseStudentAgent):
 
 ## Below is the class students need to rename and modify
 '''
+
 class ExampleTeamAgent(BaseStudentAgent):
     """
     An example TeamAgent. After renaming this agent so it is called <YourTeamName>Agent,
