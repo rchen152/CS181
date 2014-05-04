@@ -108,15 +108,14 @@ class CoequalizerAgent(BaseStudentAgent):
                     nextPos = observedState.pacmanFuturePosition([d])
                     if self.distancer.getDistance(nextPos, bgPos) < bgDist:
                         bgDir = d
+                        # Check whether the bad ghost is scared
+                        scared = observedState.scaredGhostPresent()
+                        if scared:
+                            bgScared = 1
+                        # Get a number from the state
+                        bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
+                                 (2*(bgDist - 1)) + bgScared)
                         break
-                # Check whether the bad ghost is scared
-                scared = observedState.scaredGhostPresent()
-                if scared:
-                    bgScared = 1
-                # Get a number from the state
-                bgInd = ((2*BG_RANGE*dirInd(bgDir)) +
-                         (2*(bgDist - 1)) + bgScared)
-
         # Compute good ghost state
         ggInd = -1
         # Get good ghosts in range
@@ -143,10 +142,10 @@ class CoequalizerAgent(BaseStudentAgent):
                 nextPos = observedState.pacmanFuturePosition([d])
                 if self.distancer.getDistance(nextPos, juicyPos) < juicyDist:
                     juicyDir = d
-                    break
-            # Get a number from the state
-            ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
-        
+                    # Get a number from the state
+                    ggInd = (GG_RANGE * dirInd(juicyDir)) + (juicyDist-1)
+                    break       
+ 
         # Compute good capsule state
         gcInd = -1
         # Get all capsules
@@ -169,9 +168,9 @@ class CoequalizerAgent(BaseStudentAgent):
                 nextPos = observedState.pacmanFuturePosition([d])
                 if self.distancer.getDistance(nextPos, gcPos) < gcDist:
                     gcDir = d
+                    # Get a number from the state
+                    gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
                     break
-            # Get a number from the state
-            gcInd = (CAP_RANGE * dirInd(gcDir)) + (gcDist-1)
         
         # Get overall state
         bgInd += 1
@@ -221,6 +220,7 @@ class CoequalizerAgent(BaseStudentAgent):
         else:
             if len(bgList) > 1:
                 print 'Error: multiple identical bad ghosts'
+                return None
             else:
                 return bgList[0]
 
@@ -232,18 +232,37 @@ class CoequalizerAgent(BaseStudentAgent):
         if len(ghostStates) != NUM_GHOSTS:
             print 'Warning: unexpected no. of ghosts' + str(len(ghostStates))
         badGhost = self.updateBadGhost(observedState)
-        print ObservedState.getGhostQuadrant(observedState,badGhost)
+        print 'Bad quad: ' + str(ObservedState.getGhostQuadrant(
+                observedState,badGhost))
         prevGhostStates = ghostStates
 
-        legalActs = observedState.getLegalPacmanActions()
-        return random.choice(legalActs)
+        state = self.getStateNum(observedState)
+        print 'State: ' + str(state)
+        if state != 0:
+            return random.choice(observedState.getLegalPacmanActions())
+        minDist = None
+        minGhost = None
+        for g in ghostStates:
+            if not (g.getFeatures() == badGhost.getFeatures()).all():
+                dist = self.distancer.getDistance(
+                    observedState.getPacmanPosition(), g.getPosition())
+                if not minGhost or dist < minDist:
+                    minDist = dist
+                    minGhost = g
+        posDirs = observedState.getLegalPacmanActions()
+        for d in posDirs:
+            nextPos = observedState.pacmanFuturePosition([d])
+            if self.distancer.getDistance(nextPos,
+                                          minGhost.getPosition()) < minDist:
+                return d
+        return Directions.STOP
     
 class FuturePosAgent(BaseStudentAgent):
     def chooseAction(self, observedState):
         legalActs = [a for a in observedState.getLegalPacmanActions()]
         g_pos = map(lambda x : x.getPosition(),observedState.getGhostStates())
         print g_pos
-#        print ObservedState.pacmanFuturePosition(observedState,[Directions.WEST])
+#       print ObservedState.pacmanFuturePosition(observedState,[Directions.WEST])
 #       print ObservedState.pacmanFuturePosition(observedState,[Directions.WEST,Directions.WEST,Directions.WEST])
         dir_lst = [Directions.NORTH,Directions.SOUTH,Directions.EAST,Directions.WEST,Directions.STOP]
         dir_dict = {Directions.NORTH:0,Directions.SOUTH:1,Directions.EAST:2,Directions.WEST:3,Directions.STOP:4}
