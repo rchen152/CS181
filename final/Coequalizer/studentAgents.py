@@ -156,6 +156,10 @@ class CoequalizerAgent(BaseStudentAgent):
             else:
                 return posBadGhosts[0]
 
+        if not badGhost:
+            print 'Error: no bad ghost'
+            return None
+
         bgList = [g for g in ghostStates
                   if (g.getFeatures() == badGhost.getFeatures()).all()]
         if not bgList:
