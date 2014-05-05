@@ -213,23 +213,23 @@ class CoequalizerAgent(BaseStudentAgent):
             else:
                 return rDir
         else:
-            if bgDist > HEUR_BG_RANGE:
-                g = min(goodGhosts)
-                dirs = self.getClosestDirs(
-                    observedState, pacDirs, g[1].getPosition(), g[0])
-                # TODO in ties?
+            goodCaps = [c for c in goodCaps
+                        if c[0] < self.distancer.getDistance(c[1],bgPos)]
+            if goodCaps:
+                c = min(goodCaps)
+                # TODO tie in distance to caps - go to cap closer to BG
+                # TODO tie in direction to closest cap - avoid ghost
+                dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
                 if dirs:
                     return dirs[0]
                 else:
                     return rDir
             else:
-                goodCaps = [c for c in goodCaps
-                            if c[0] < self.distancer.getDistance(c[1],bgPos)]
-                if goodCaps:
-                    c = min(goodCaps)
-                    # TODO tie in distance to caps - go to cap closer to BG
-                    # TODO tie in direction to closest cap - avoid ghost
-                    dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
+                if bgDist > HEUR_BG_RANGE:
+                    g = min(goodGhosts)
+                    dirs = self.getClosestDirs(
+                        observedState, pacDirs, g[1].getPosition(), g[0])
+                    # TODO in ties?
                     if dirs:
                         return dirs[0]
                     else:
