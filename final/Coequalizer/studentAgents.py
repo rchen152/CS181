@@ -208,7 +208,6 @@ class CoequalizerAgent(BaseStudentAgent):
             dirs = self.getClosestDirs(
                 observedState, pacDirs, bgPos, bgDist)
             if dirs:
-                # TODO in ties, go in direction of (good?) capsule
                 return dirs[0]
             else:
                 return rDir
@@ -254,6 +253,71 @@ class CoequalizerAgent(BaseStudentAgent):
         prevGhostStates = ghostStates
 
         return self.chooseActionByHeuristic(observedState)
+
+class FisherAgent(CoequalizerAgent):
+
+    def chooseActionByHeuristic(self, observedState):
+        global badGhost
+
+        pacDirs = [d for d in observedState.getLegalPacmanActions()
+                   if d != Directions.STOP]
+        rDir = random.choice(pacDirs)
+        if not badGhost:
+            return rDir
+
+        pacPos = observedState.getPacmanPosition()
+        bgPos = badGhost.getPosition()
+        bgDist = self.distancer.getDistance(pacPos, bgPos)
+        goodGhosts = self.getGoodGhostInfo(observedState)
+        goodCaps = self.getGoodCapInfo(observedState)
+
+        if observedState.scaredGhostPresent():
+            for c in goodCaps:
+                capBadDist = self.distancer.getDistance(c[1],bgPos)
+                if c[0] + capBadDist == bgDist:
+                    dirs = self.getClosestDirs(
+                        observedState, pacDirs, c[1], c[0])
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
+            dirs = self.getClosestDirs(
+                observedState, pacDirs, bgPos, bgDist)
+            if dirs:
+                return dirs[0]
+            else:
+                return rDir
+        else:
+            goodCaps = [c for c in goodCaps
+                        if c[0] < self.distancer.getDistance(c[1],bgPos)]
+            if goodCaps:
+                c = min(goodCaps)
+                dirs = self.getClosestDirs(observedState,pacDirs,c[1],c[0])
+                if c[0] > 1 or bgDist <= BG_RANGE:
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
+                else:
+                    return random.choice([d for d in pacDirs if d not in dirs])
+            else:
+                if bgDist > HEUR_BG_RANGE:
+                    g = min(goodGhosts)
+                    dirs = self.getClosestDirs(
+                        observedState, pacDirs, g[1].getPosition(), g[0])
+                    # TODO in ties?
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
+                else:
+                    # TODO in tie - go toward bad capsule
+                    dirs = self.getFarthestDirs(
+                        observedState, pacDirs, bgPos, bgDist)
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
 
 '''class CoSecondAgent(CoequalizerAgent):
     
