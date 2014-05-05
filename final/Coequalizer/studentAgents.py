@@ -23,7 +23,7 @@ GG_RANGE = 1
 CAP_RANGE = 1
 NUM_DIRS = 4
 NUM_MOVES = NUM_DIRS + 1
-HEUR_BG_RANGE = 4
+HEUR_BG_RANGE = 3
 
 badGhost = None
 prevGhostStates = []
@@ -185,12 +185,26 @@ class CoequalizerAgent(BaseStudentAgent):
 
         rDir = random.choice([d for d in observedState.getLegalPacmanActions()
                               if d != Directions.STOP])
+        if not badGhost:
+            return rDir
+
         pacPos = observedState.getPacmanPosition()
         pacDirs = observedState.getLegalPacmanActions()
-
         bgPos = badGhost.getPosition()
         bgDist = self.distancer.getDistance(pacPos, bgPos)
+        goodGhosts = self.getGoodGhostInfo(observedState)
+        goodCaps = self.getGoodCapInfo(observedState)
+
         if observedState.scaredGhostPresent():
+            for c in goodCaps:
+                capBadDist = self.distancer.getDistance(c[1],bgPos)
+                if c[0] + capBadDist == bgDist:
+                    dirs = self.getClosestDirs(
+                        observedState, pacDirs, c[1], c[0])
+                    if dirs:
+                        return dirs[0]
+                    else:
+                        return rDir
             dirs = self.getClosestDirs(
                 observedState, pacDirs, bgPos, bgDist)
             if dirs:
@@ -200,7 +214,6 @@ class CoequalizerAgent(BaseStudentAgent):
                 return rDir
         else:
             if bgDist > HEUR_BG_RANGE:
-                goodGhosts = self.getGoodGhostInfo(observedState)
                 g = min(goodGhosts)
                 dirs = self.getClosestDirs(
                     observedState, pacDirs, g[1].getPosition(), g[0])
@@ -210,7 +223,6 @@ class CoequalizerAgent(BaseStudentAgent):
                 else:
                     return rDir
             else:
-                goodCaps = self.getGoodCapInfo(observedState)
                 goodCaps = [c for c in goodCaps
                             if c[0] < self.distancer.getDistance(c[1],bgPos)]
                 if goodCaps:
